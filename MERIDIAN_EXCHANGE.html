@@ -1,0 +1,2945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meridian Exchange</title>
+<style>
+:root{
+  --bg:#12100E; --panel:#1A1714; --panel2:#221D18; --line:#2E2823;
+  --bone:#E8E1D4; --dim:#95897A; --faint:#6A6055;
+  --amber:#E0A32E; --rust:#B4532A; --up:#8FA85F; --down:#C7573A;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--bg);color:var(--bone);font-family:var(--mono);font-size:13px;line-height:1.45;
+  -webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:12px;color:var(--bone);background:var(--panel2);
+  border:1px solid var(--line);padding:5px 10px;cursor:pointer;letter-spacing:.02em}
+button:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.primary{background:var(--rust);border-color:var(--rust);color:#F6EEE2}
+button.primary:hover:not(:disabled){background:#C75F32;border-color:#C75F32;color:#fff}
+button.ghost{background:transparent}
+input,select{font-family:inherit;font-size:12px;color:var(--bone);background:#0D0B09;
+  border:1px solid var(--line);padding:5px 7px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--amber)}
+a{color:var(--amber)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-weight:500;color:var(--faint);padding:4px 8px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--panel);white-space:nowrap}
+td{padding:4px 8px;border-bottom:1px solid rgba(46,40,35,.55);white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#221D18}
+tr.sel td{background:#2A2119}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.up{color:var(--up)} .down{color:var(--down)} .dim{color:var(--dim)} .faint{color:var(--faint)}
+.amber{color:var(--amber)} .rust{color:var(--rust)}
+
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:18px;padding:8px 14px;background:var(--panel);
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-size:14px;letter-spacing:.16em;color:var(--amber)}
+.brand small{display:block;font-size:10px;letter-spacing:.28em;color:var(--faint)}
+.stat{display:flex;flex-direction:column;min-width:92px}
+.stat b{font-weight:500;font-size:13px}
+.stat span{font-size:10px;color:var(--faint);letter-spacing:.1em}
+.speed{margin-left:auto;display:flex;gap:4px;align-items:center}
+nav{display:flex;gap:2px;padding:0 10px;background:var(--panel);border-bottom:1px solid var(--line);
+  overflow-x:auto}
+nav button{border:none;background:none;padding:9px 13px;color:var(--dim);border-bottom:2px solid transparent}
+nav button.on{color:var(--amber);border-bottom-color:var(--rust)}
+nav button:hover{color:var(--bone)}
+main{flex:1;overflow:auto;padding:14px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.g12{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+@media(max-width:900px){.g2,.g3,.g21,.g12{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line)}
+.card h3{margin:0;padding:7px 10px;font-size:11px;font-weight:500;letter-spacing:.14em;
+  color:var(--faint);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;
+  align-items:center;gap:8px}
+.card .body{padding:10px}
+.card .scroll{max-height:300px;overflow:auto}
+.kv{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(46,40,35,.5)}
+.kv:last-child{border-bottom:none}
+.kv span{color:var(--dim)}
+.big{font-size:22px;letter-spacing:-.02em}
+.pill{display:inline-block;padding:1px 6px;border:1px solid var(--line);font-size:10px;color:var(--dim)}
+.pill.on{border-color:var(--up);color:var(--up)}
+.pill.off{border-color:var(--down);color:var(--down)}
+.pill.warn{border-color:var(--amber);color:var(--amber)}
+.bar{height:4px;background:#0D0B09;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--rust)}
+.log{font-size:11px;line-height:1.6}
+.log div{padding:2px 0;border-bottom:1px solid rgba(46,40,35,.4)}
+.log .d{color:var(--faint);margin-right:6px}
+.log .event{color:var(--amber)} .log .good{color:var(--up)} .log .bad{color:var(--down)}
+.log .contract{color:#9AA9C0} .log .market{color:var(--dim)}
+.form{display:grid;gap:7px}
+.form label{font-size:10px;letter-spacing:.1em;color:var(--faint);display:block;margin-bottom:2px}
+.row{display:flex;gap:7px}
+.row>*{flex:1}
+.tick{font-size:11px;color:var(--faint);padding:4px 0}
+.err{color:var(--down);font-size:11px;min-height:15px}
+canvas{display:block;width:100%}
+.depth{display:grid;grid-template-columns:1fr 1fr;gap:1px;font-size:11px}
+.depth div{padding:2px 6px;display:flex;justify-content:space-between}
+.depth .b{background:linear-gradient(to left,rgba(143,168,95,.16) var(--w,0%),transparent 0)}
+.depth .a{background:linear-gradient(to right,rgba(199,87,58,.16) var(--w,0%),transparent 0)}
+.chip{display:inline-flex;gap:5px;align-items:center;padding:2px 7px;border:1px solid var(--line);
+  font-size:11px;margin:0 4px 4px 0;cursor:pointer;color:var(--dim)}
+.chip.on{border-color:var(--amber);color:var(--amber)}
+.overlay{position:fixed;inset:0;background:rgba(9,8,7,.93);display:flex;align-items:center;
+  justify-content:center;padding:20px;z-index:50;overflow:auto}
+.sheet{max-width:820px;width:100%;background:var(--panel);border:1px solid var(--line);padding:26px}
+.sheet h1{font-size:20px;letter-spacing:.2em;margin:0 0 2px;color:var(--amber);font-weight:500}
+.sheet p.lede{color:var(--dim);margin:0 0 20px;font-size:12px;max-width:62ch}
+.paths{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:9px}
+.path{border:1px solid var(--line);padding:11px;cursor:pointer;background:var(--panel2)}
+.path:hover{border-color:var(--amber)}
+.path.on{border-color:var(--rust);background:#241C16}
+.path b{display:block;color:var(--bone);margin-bottom:3px;font-weight:500}
+.path small{color:var(--dim);font-size:11px;line-height:1.5;display:block}
+.path .cap{color:var(--amber);font-size:11px;margin-top:6px;display:block}
+.toast{position:fixed;right:14px;bottom:14px;background:var(--panel2);border:1px solid var(--amber);
+  padding:8px 12px;font-size:12px;color:var(--bone);z-index:60;max-width:340px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:#0D0B09}
+::-webkit-scrollbar-thumb{background:#2E2823}
+::-webkit-scrollbar-thumb:hover{background:#4A4038}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+/* ============================================================
+   MERIDIAN EXCHANGE - simulation core, part 1: static data
+   No DOM references in core_data.js / core_sim.js.
+   ============================================================ */
+var ECON = (function () {
+"use strict";
+
+var WAGE_UNIT = 10;      // reference $/labor-hour
+var TAX_RATE = 0.16;     // corporate tax on daily operating profit
+var BASE_INTEREST = 0.075;
+
+var COMM = [
+  { id:"iron_ore",  name:"Iron ore",       tier:0, p0:12,   w:1.6, unit:"t"  },
+  { id:"coal",      name:"Coal",           tier:0, p0:8.5,  w:1.6, unit:"t"  },
+  { id:"copper_ore",name:"Copper ore",     tier:0, p0:18,   w:1.6, unit:"t"  },
+  { id:"timber",    name:"Timber",         tier:0, p0:6.5,  w:1.7, unit:"m3" },
+  { id:"crude_oil", name:"Crude oil",      tier:0, p0:12.5, w:1.4, unit:"bbl"},
+  { id:"steel",     name:"Steel",          tier:1, p0:60,   w:1.0, unit:"t"  },
+  { id:"refined_copper", name:"Refined copper", tier:1, p0:95, w:1.0, unit:"t" },
+  { id:"lumber",    name:"Lumber",         tier:1, p0:24,   w:1.1, unit:"m3" },
+  { id:"fuel",      name:"Fuel",           tier:1, p0:45,   w:0.9, unit:"kl" },
+  { id:"machines",  name:"Machines",       tier:2, p0:1000, w:0.5, unit:"ea" },
+  { id:"constr",    name:"Building material", tier:2, p0:300, w:0.8, unit:"t" },
+  { id:"vehicles",  name:"Vehicles",       tier:2, p0:3550, w:0.5, unit:"ea" }
+];
+var CMAP = {}; COMM.forEach(function (c) { CMAP[c.id] = c; });
+
+var REGIONS = [
+  { id:"KAR", name:"Karrek Basin",    x:120, y:150, labor:1400, wage:9.5,  ecap:6200, eprice:0.75, demand:0.8,
+    deposits:{ iron_ore:900000, coal:620000 } },
+  { id:"VER", name:"Verdigris Range", x:300, y:70,  labor:1000, wage:10.5, ecap:4400, eprice:0.85, demand:0.7,
+    deposits:{ copper_ore:520000, timber:800000 } },
+  { id:"BLA", name:"Blacksand Flats", x:170, y:400, labor:1000, wage:11.0, ecap:5000, eprice:0.70, demand:0.6,
+    deposits:{ crude_oil:740000, coal:300000 } },
+  { id:"HAL", name:"Halston Works",   x:400, y:250, labor:1800, wage:12.0, ecap:8000, eprice:0.90, demand:1.6,
+    deposits:{} },
+  { id:"MER", name:"Meridian Port",   x:560, y:390, labor:1000, wage:11.5, ecap:4800, eprice:1.00, demand:1.5,
+    deposits:{ timber:220000 } }
+];
+var RMAP = {}; REGIONS.forEach(function (r) { RMAP[r.id] = r; });
+
+var DIST = {
+  "KAR|VER":240, "KAR|BLA":380, "KAR|HAL":180, "KAR|MER":520,
+  "VER|BLA":300, "VER|HAL":260, "VER|MER":430,
+  "BLA|HAL":340, "BLA|MER":290,
+  "HAL|MER":350
+};
+function dist(a, b) {
+  if (a === b) return 0;
+  return DIST[a + "|" + b] !== undefined ? DIST[a + "|" + b] : DIST[b + "|" + a];
+}
+
+/* Buildings. Rates are per production day at full utilisation. */
+var BUILD = {
+  iron_mine:      { name:"Iron mine",        tier:0, cls:"extract", cap:18000,
+    out:{ iron_ore:60 },  inp:{}, labor:30, energy:90,  maint:104, dep:"iron_ore" },
+  coal_mine:      { name:"Coal mine",        tier:0, cls:"extract", cap:15000,
+    out:{ coal:75 },      inp:{}, labor:28, energy:80,  maint:92, dep:"coal" },
+  copper_mine:    { name:"Copper mine",      tier:0, cls:"extract", cap:19500,
+    out:{ copper_ore:45 },inp:{}, labor:34, energy:105, maint:120, dep:"copper_ore" },
+  logging_camp:   { name:"Logging camp",     tier:0, cls:"extract", cap:11500,
+    out:{ timber:80 },    inp:{}, labor:25, energy:55,  maint:68,  dep:"timber" },
+  oil_well:       { name:"Oil well",         tier:0, cls:"extract", cap:20500,
+    out:{ crude_oil:65 }, inp:{}, labor:30, energy:125, maint:132, dep:"crude_oil" },
+
+  steel_mill:     { name:"Steel mill",       tier:1, cls:"process", cap:47000,
+    out:{ steel:36 },     inp:{ iron_ore:48, coal:24 }, labor:40, energy:210, maint:192 },
+  copper_refinery:{ name:"Copper refinery",  tier:1, cls:"process", cap:45000,
+    out:{ refined_copper:22 }, inp:{ copper_ore:40, coal:10 }, labor:36, energy:195, maint:180 },
+  sawmill:        { name:"Sawmill",          tier:1, cls:"process", cap:24000,
+    out:{ lumber:45 },    inp:{ timber:60 }, labor:22, energy:95, maint:96 },
+  oil_refinery:   { name:"Oil refinery",     tier:1, cls:"process", cap:39000,
+    out:{ fuel:40 },      inp:{ crude_oil:52 }, labor:34, energy:175, maint:168 },
+
+  machine_works:  { name:"Machine works",    tier:2, cls:"factory", cap:120000,
+    out:{ machines:6 },   inp:{ steel:30, refined_copper:12, fuel:10 }, labor:55, energy:300, maint:320 },
+  materials_plant:{ name:"Materials plant",  tier:2, cls:"factory", cap:72000,
+    out:{ constr:12 },    inp:{ steel:18, lumber:24, fuel:6 }, labor:38, energy:190, maint:208 },
+  vehicle_plant:  { name:"Vehicle plant",    tier:2, cls:"factory", cap:213000,
+    out:{ vehicles:3 },   inp:{ machines:4, steel:24, refined_copper:6, fuel:12 }, labor:70, energy:380, maint:416 },
+
+  warehouse:      { name:"Warehouse",        tier:0, cls:"support", cap:19500,
+    out:{}, inp:{}, labor:2, energy:8, maint:24, storage:4000 },
+  truck_depot:    { name:"Truck depot",      tier:0, cls:"support", cap:26500,
+    out:{}, inp:{}, labor:5, energy:12, maint:44, haul:600 }
+};
+
+/* Technology. cost in $, days to complete, prereq list. */
+var TECH = {
+  deep_drilling:   { name:"Deep drilling",      cost:66000, days:16, req:[],
+    desc:"Extraction sites yield 14% more per day." },
+  ore_sorting:     { name:"Ore sorting",        cost:82000, days:19, req:[],
+    desc:"Smelters and refineries need 10% less ore input." },
+  arc_furnace:     { name:"Arc furnace",        cost:115000, days:24, req:["ore_sorting"],
+    desc:"Processing plants draw 18% less power." },
+  automation_1:    { name:"Line automation",    cost:99000, days:21, req:[],
+    desc:"All sites need 12% fewer labor-hours." },
+  automation_2:    { name:"Adaptive control",   cost:231000, days:31, req:["automation_1"],
+    desc:"A further 14% off labor and 6% off maintenance." },
+  precision_tools: { name:"Precision tooling",  cost:181000, days:26, req:["automation_1"],
+    desc:"Machine works and vehicle plants produce 12% more." },
+  quality_control: { name:"Quality control",    cost:154000, days:24, req:["precision_tools"],
+    desc:"Buyers of your finished goods pay a 7% premium." },
+  preventive_maint:{ name:"Preventive upkeep",  cost:88000, days:18, req:[],
+    desc:"Maintenance costs fall 22%." },
+  grid_contracts:  { name:"Grid contracts",     cost:77000, days:14, req:[],
+    desc:"You buy power 16% below the regional rate." },
+  cogeneration:    { name:"Cogeneration",       cost:214000, days:28, req:["grid_contracts","arc_furnace"],
+    desc:"On-site generation cuts another 26% off power." },
+  route_planning:  { name:"Route planning",     cost:71000, days:14, req:[],
+    desc:"Freight costs 18% less." },
+  fleet_scale:     { name:"Fleet scale",        cost:143000, days:21, req:["route_planning"],
+    desc:"Each depot hauls 60% more, and carrier jobs pay you 15% more." },
+  bulk_handling:   { name:"Bulk handling",      cost:66000, days:12, req:[],
+    desc:"Storage capacity rises 60% everywhere." },
+  market_terminal: { name:"Market terminal",    cost:110000, days:16, req:[],
+    desc:"Full order book depth, real volumes and honest supply figures." },
+  futures_desk:    { name:"Futures desk",       cost:165000, days:24, req:["market_terminal"],
+    desc:"Longer contracts, better counterparty terms, and forward price estimates." }
+};
+
+/* Event definitions are applied by the sim; see core_sim.js. */
+var EVENTS = [
+  "mine_collapse","discovery","energy_shortage","plant_fire","route_closed",
+  "demand_surge","breakthrough","public_works","conflict","recession","strike","glut"
+];
+
+var ARCH = {
+  extractor:   { name:"Extractor",    build:["iron_mine","coal_mine","copper_mine","logging_camp","oil_well"] },
+  processor:   { name:"Processor",    build:["steel_mill","copper_refinery","sawmill","oil_refinery"] },
+  manufacturer:{ name:"Manufacturer", build:["machine_works","materials_plant","vehicle_plant"] },
+  trader:      { name:"Trader",       build:[] },
+  hauler:      { name:"Hauler",       build:["truck_depot","warehouse"] },
+  conglomerate:{ name:"Conglomerate", build:["iron_mine","steel_mill","machine_works","coal_mine","materials_plant","oil_well","oil_refinery"] }
+};
+
+var STARTS = [
+  { id:"extractor", title:"Raw material extractor", cash:70000, arch:"extractor",
+    blurb:"Two producing sites in the Karrek Basin. Ore is cheap and everyone needs it; your margin is thin until you move up the chain.",
+    grant:[["iron_mine","KAR"],["coal_mine","KAR"]] },
+  { id:"processor", title:"Processor", cash:90000, arch:"processor",
+    blurb:"A steel mill in Halston with no ore of its own. You live or die by input prices, and the spread is yours to defend.",
+    grant:[["steel_mill","HAL"]] },
+  { id:"manufacturer", title:"Manufacturer", cash:110000, arch:"manufacturer",
+    blurb:"A machine works in Halston. High revenue per unit, and a shopping list that exposes you to three markets at once.",
+    grant:[["machine_works","HAL"]] },
+  { id:"trader", title:"Trader", cash:520000, arch:"trader",
+    blurb:"No plant, no payroll, no maintenance. Only capital, price history and nerve.",
+    grant:[] },
+  { id:"hauler", title:"Haulier", cash:160000, arch:"hauler",
+    blurb:"Three depots and a warehouse at the Port. You move other people's cargo and learn where the shortages are before they do.",
+    grant:[["truck_depot","MER"],["truck_depot","MER"],["truck_depot","HAL"],["warehouse","MER"]] },
+  { id:"industrialist", title:"Industrialist", cash:400000, arch:"conglomerate",
+    blurb:"Capital and a sawmill. No specialism, no head start, and every door still open.",
+    grant:[["sawmill","VER"]] }
+];
+
+var NAMES = [
+  "Ardent Metals","Coldwater Mining","Halston Foundry Co","Sable Petroleum","Verdigris Copper",
+  "Pell & Doyle","Karrek Consolidated","Meridian Freight","Blackrail Industrial","Ostrander Timber",
+  "Tessyn Trading House","Vaunt Motorworks","Ironmarch Group","Culvert Chemical","Northlight Holdings"
+];
+
+var API = {
+  WAGE_UNIT: WAGE_UNIT, TAX_RATE: TAX_RATE, BASE_INTEREST: BASE_INTEREST,
+  COMM: COMM, CMAP: CMAP, REGIONS: REGIONS, RMAP: RMAP, BUILD: BUILD, TECH: TECH,
+  ARCH: ARCH, STARTS: STARTS, NAMES: NAMES, EVENTS: EVENTS, dist: dist
+};
+return API;
+})();
+
+
+/* ============================================================
+   MERIDIAN EXCHANGE - simulation core, part 2: engine
+   ============================================================ */
+(function (E) {
+"use strict";
+
+var CMAP = E.CMAP, RMAP = E.RMAP, BUILD = E.BUILD, TECH = E.TECH, COMM = E.COMM, REGIONS = E.REGIONS;
+
+/* ---------- utility ---------- */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function pick(rnd, arr) { return arr[Math.floor(rnd() * arr.length) % arr.length]; }
+function round2(v) { return Math.round(v * 100) / 100; }
+
+var CONSUMER_GOODS = { fuel:275, machines:29, constr:85, vehicles:17, lumber:80 };
+var DEMAND_WEIGHT = 5.2; // sum of region demand multipliers
+
+/* ---------- construction ---------- */
+function newCompany(G, name, arch, cash, isPlayer) {
+  var co = {
+    id: "C" + (G.nextCo++), name: name, arch: arch, isPlayer: !!isPlayer,
+    cash: cash, debt: 0, escrow: 0, rep: 1,
+    inv: {}, res: {}, buildings: [], tech: {}, research: null,
+    orders: [], contracts: [], jobs: [],
+    day: blankLedger(), cum: blankLedger(),
+    hist: [], valuation: cash, netHist: [], bankrupt: false,
+    ai: { lastBuild: -99, mood: 0.9 + G.rnd() * 0.25, basis: {} },
+    stats: { produced: {}, sold: {}, bought: {} }
+  };
+  REGIONS.forEach(function (r) { co.inv[r.id] = {}; co.res[r.id] = {}; });
+  G.companies.push(co); G.co[co.id] = co;
+  return co;
+}
+function blankLedger() {
+  return { rev:0, cogs:0, wages:0, energy:0, maint:0, freight:0, interest:0, tax:0,
+           capex:0, penalty:0, storage:0, fees:0, research:0, profit:0 };
+}
+function regionLoad(G, rid) {
+  var l = 0, e = 0;
+  G.buildings.forEach(function (b) {
+    if (b.rid !== rid) return;
+    var d = BUILD[b.type], th = levelThroughput(b);
+    l += d.labor * th; e += d.energy * th;
+  });
+  return { labor: l, energy: e };
+}
+function canBuild(G, co, type, rid) {
+  var d = BUILD[type], r = RMAP[rid], load = regionLoad(G, rid);
+  if (d.dep && !(G.regionState[rid].deposits[d.dep] > 0))
+    return { ok: false, msg: "No " + CMAP[d.dep].name.toLowerCase() + " reserves in " + r.name + "." };
+  if (load.labor + d.labor > r.labor * 1.3)
+    return { ok: false, msg: "No crews to spare in " + r.name + ". Every hand in the district is already hired." };
+  if (load.energy + d.energy > r.ecap * 1.25)
+    return { ok: false, msg: "The " + r.name + " grid cannot carry another connection of this size." };
+  return { ok: true };
+}
+function addBuilding(G, co, type, rid, free) {
+  var b = { id: "B" + (G.nextB++), type: type, rid: rid, owner: co.id, level: 1,
+            idle: false, down: 0, util: 0, cond: 1, streak: 0, built: G.day, pnl: 0, rate: 1, autoBuy: true, autoSell: true };
+  co.buildings.push(b); G.buildings.push(b);
+  if (!free) { co.cash -= BUILD[type].cap; co.day.capex += BUILD[type].cap; }
+  return b;
+}
+
+function newGame(opts) {
+  opts = opts || {};
+  var G = {
+    seed: opts.seed || 12345, day: 1, nextCo: 1, nextB: 1, nextO: 1, nextS: 1, nextK: 1,
+    companies: [], co: {}, buildings: [], books: {}, shipments: [], offers: [], contracts: [],
+    jobs: [], events: [], log: [], econ: 1, ticks: 0, over: null,
+    regionState: {}, freightMod: {}, demandMod: {}, worldTech: {}, flow: { faucet:0, sink:0 },
+    balance: {}, capacity: {}
+  };
+  G.rnd = mulberry32(G.seed);
+  REGIONS.forEach(function (r) {
+    G.books[r.id] = {};
+    COMM.forEach(function (c) {
+      G.books[r.id][c.id] = { bids: [], asks: [], last: c.p0, ema: c.p0, vol: 0,
+        hist: [{ d:0, p:c.p0, v:0 }], trades: [], dayVol: 0, dayVal: 0 };
+    });
+    G.regionState[r.id] = { labor: r.labor, wage: r.wage, laborUse: 0, laborScale: 1,
+      ecap: r.ecap, eprice: r.eprice, euse: 0, eScale: 1,
+      deposits: Object.assign({}, r.deposits), demandMod: 1, laborMod: 1, energyMod: 1 };
+  });
+  // consumer & state pseudo-companies
+  G.consumer = { id:"CON", name:"Consumers", sink:true, cash:1e15, inv:{}, res:{}, tech:{},
+                 buildings:[], orders:[], escrow:0, day:blankLedger(), cum:blankLedger(),
+                 stats:{ produced:{}, sold:{}, bought:{} }, rep:1, debt:0, contracts:[] };
+  REGIONS.forEach(function (r) { G.consumer.inv[r.id] = {}; G.consumer.res[r.id] = {}; });
+  G.co["CON"] = G.consumer;
+
+  seedWorld(G, opts);
+  return G;
+}
+
+/* World: the established industrial base, sized to the equilibrium chain. */
+function seedWorld(G, opts) {
+  var plan = [
+    { name:"Karrek Consolidated", arch:"extractor",
+      b:[["iron_mine","KAR",5],["coal_mine","KAR",2],["warehouse","KAR",3],["truck_depot","KAR",2]] },
+    { name:"Verdigris Copper", arch:"extractor",
+      b:[["copper_mine","VER",4],["logging_camp","VER",2],["warehouse","VER",3]] },
+    { name:"Sable Petroleum", arch:"processor",
+      b:[["oil_well","BLA",4],["oil_refinery","BLA",3],["warehouse","BLA",3],["truck_depot","BLA",1]] },
+    { name:"Halston Foundry Co", arch:"processor",
+      b:[["steel_mill","HAL",6],["copper_refinery","HAL",2],["warehouse","HAL",4],["truck_depot","HAL",2]] },
+    { name:"Ostrander Timber", arch:"processor",
+      b:[["logging_camp","MER",1],["sawmill","VER",2],["sawmill","MER",2],["warehouse","MER",3]] },
+    { name:"Vaunt Motorworks", arch:"manufacturer",
+      b:[["machine_works","HAL",3],["vehicle_plant","HAL",2],["materials_plant","HAL",3],["warehouse","HAL",4],["truck_depot","HAL",1]] },
+    { name:"Ironmarch Group", arch:"conglomerate",
+      b:[["iron_mine","KAR",3],["coal_mine","BLA",2],["steel_mill","KAR",2],["steel_mill","HAL",2],
+         ["machine_works","MER",3],["materials_plant","HAL",1],["materials_plant","MER",1],
+         ["oil_well","BLA",2],["oil_refinery","BLA",2],["oil_refinery","MER",3],
+         ["copper_refinery","VER",2],["vehicle_plant","MER",2],
+         ["warehouse","KAR",2],["warehouse","HAL",3],["warehouse","MER",3],["warehouse","BLA",2],
+         ["truck_depot","KAR",2],["truck_depot","MER",2]] },
+    { name:"Tessyn Trading House", arch:"trader",
+      b:[["warehouse","HAL",3],["warehouse","MER",2],["warehouse","KAR",1],["truck_depot","MER",2]] },
+    { name:"Meridian Freight", arch:"hauler",
+      b:[["truck_depot","MER",4],["truck_depot","HAL",3],["truck_depot","KAR",2],["truck_depot","BLA",1],["warehouse","MER",2]] }
+  ];
+  plan.forEach(function (p) {
+    var co = newCompany(G, p.name, p.arch, 0, false);
+    p.b.forEach(function (t) { for (var i = 0; i < t[2]; i++) addBuilding(G, co, t[0], t[1], true); });
+    // opening stock: five days of inputs
+    co.buildings.forEach(function (b) {
+      var d = BUILD[b.type];
+      for (var k in d.inp) invAdd(co, b.rid, k, d.inp[k] * 10);
+    });
+    co.cash = workingCapital(G, co);
+  });
+  // player
+  var st = null;
+  E.STARTS.forEach(function (s) { if (s.id === (opts.start || "extractor")) st = s; });
+  var pc = newCompany(G, opts.company || "New Venture", st.arch, st.cash, true);
+  G.player = pc;
+  st.grant.forEach(function (g) { addBuilding(G, pc, g[0], g[1], true); });
+  pc.buildings.forEach(function (b) {
+    var d = BUILD[b.type];
+    for (var k in d.inp) invAdd(pc, b.rid, k, d.inp[k] * 3);
+  });
+  logMsg(G, "Trading opens on the Meridian Exchange.", "sys");
+}
+function dailyOps(G, co) {
+  var t = 0;
+  co.buildings.forEach(function (b) {
+    var d = BUILD[b.type], rs = G.regionState[b.rid], th = levelThroughput(b);
+    t += d.labor * th * rs.wage + d.energy * th * rs.eprice + d.maint * th;
+    for (var k in d.inp) t += d.inp[k] * th * CMAP[k].p0;
+  });
+  return t;
+}
+function workingCapital(G, co) {
+  if (co.arch === "trader") return 1400000;
+  return Math.round(dailyOps(G, co) * 26 + 90000);
+}
+
+/* ---------- inventory ---------- */
+function invGet(co, rid, cid) { var r = co.inv[rid]; return (r && r[cid]) || 0; }
+function resGet(co, rid, cid) { var r = co.res[rid]; return (r && r[cid]) || 0; }
+function avail(co, rid, cid) { return invGet(co, rid, cid) - resGet(co, rid, cid); }
+function invAdd(co, rid, cid, q) {
+  if (!co.inv[rid]) co.inv[rid] = {};
+  co.inv[rid][cid] = (co.inv[rid][cid] || 0) + q;
+  if (co.inv[rid][cid] < 1e-6) delete co.inv[rid][cid];
+}
+function resAdd(co, rid, cid, q) {
+  if (!co.res[rid]) co.res[rid] = {};
+  co.res[rid][cid] = (co.res[rid][cid] || 0) + q;
+  if (co.res[rid][cid] < 1e-6) delete co.res[rid][cid];
+}
+function storageCap(G, co, rid) {
+  var cap = 3000 * (co.tech.bulk_handling ? 1.6 : 1);
+  co.buildings.forEach(function (b) {
+    if (b.rid === rid && BUILD[b.type].storage) cap += BUILD[b.type].storage * (co.tech.bulk_handling ? 1.6 : 1);
+  });
+  return cap;
+}
+function storageUsed(G, co, rid) {
+  var u = 0, inv = co.inv[rid] || {};
+  for (var k in inv) u += inv[k] * CMAP[k].w;
+  return u;
+}
+function haulCap(G, co) {
+  var c = 0;
+  co.buildings.forEach(function (b) { if (BUILD[b.type].haul) c += BUILD[b.type].haul; });
+  return c * (co.tech.fleet_scale ? 1.6 : 1);
+}
+function haulUsed(G, co) {
+  var u = 0;
+  G.shipments.forEach(function (s) { if (s.carrier === co.id) u += s.load; });
+  return u;
+}
+
+/* ---------- prices & freight ---------- */
+function book(G, rid, cid) { return G.books[rid][cid]; }
+function price(G, rid, cid) { return book(G, rid, cid).ema; }
+function bestAsk(G, rid, cid) { var b = book(G, rid, cid); return b.asks.length ? b.asks[0].price : null; }
+function bestBid(G, rid, cid) { var b = book(G, rid, cid); return b.bids.length ? b.bids[0].price : null; }
+
+function freightRate(G, from, to, cid) {
+  var d = E.dist(from, to);
+  var key = from < to ? from + "|" + to : to + "|" + from;
+  var mod = G.freightMod[key] || 1;
+  var fuelIdx = 0.55 + 0.45 * (price(G, "HAL", "fuel") / CMAP.fuel.p0);
+  return CMAP[cid].p0 * 0.00045 * CMAP[cid].w * d * mod * fuelIdx;
+}
+function freightCost(G, co, from, to, cid, qty) {
+  var base = freightRate(G, from, to, cid) * qty;
+  if (co && co.tech.route_planning) base *= 0.82;
+  return base;
+}
+function transitDays(from, to) { return Math.max(1, Math.round(E.dist(from, to) / 260)); }
+
+/* ---------- order book ---------- */
+function placeOrder(G, co, side, cid, rid, price, qty, ttl) {
+  qty = Math.floor(qty); if (qty <= 0 || !(price > 0)) return null;
+  var bk = book(G, rid, cid);
+  if (side === "buy") {
+    var free = co.sink ? Infinity : co.cash - co.escrow;
+    var afford = Math.floor(free / price);
+    qty = Math.min(qty, afford);
+    if (qty <= 0) return null;
+    if (!co.sink) co.escrow += qty * price;
+  } else {
+    qty = Math.min(qty, Math.floor(avail(co, rid, cid)));
+    if (qty <= 0) return null;
+    resAdd(co, rid, cid, qty);
+  }
+  var o = { id: "O" + (G.nextO++), t: G.ticks++, co: co.id, side: side, cid: cid, rid: rid,
+            price: round2(price), qty: qty, ttl: ttl === undefined ? 4 : ttl };
+  (side === "buy" ? bk.bids : bk.asks).push(o);
+  sortBook(bk);
+  if (co.orders) co.orders.push(o);
+  matchBook(G, rid, cid);
+  return o;
+}
+function sortBook(bk) {
+  bk.bids.sort(function (a, b) { return b.price - a.price || a.t - b.t; });
+  bk.asks.sort(function (a, b) { return a.price - b.price || a.t - b.t; });
+}
+function cancelOrder(G, o) {
+  var bk = book(G, o.rid, o.cid);
+  var arr = o.side === "buy" ? bk.bids : bk.asks;
+  var i = arr.indexOf(o); if (i < 0) return false;
+  arr.splice(i, 1);
+  releaseOrder(G, o);
+  return true;
+}
+function releaseOrder(G, o) {
+  var co = G.co[o.co]; if (!co) return;
+  if (o.side === "buy") { if (!co.sink) co.escrow -= o.qty * o.price; }
+  else resAdd(co, o.rid, o.cid, -o.qty);
+  if (co.orders) { var i = co.orders.indexOf(o); if (i >= 0) co.orders.splice(i, 1); }
+}
+
+function matchBook(G, rid, cid) {
+  var bk = book(G, rid, cid);
+  var guard = 0;
+  while (bk.bids.length && bk.asks.length && bk.bids[0].price >= bk.asks[0].price && guard++ < 500) {
+    var b = bk.bids[0], a = bk.asks[0];
+    var buyer = G.co[b.co], seller = G.co[a.co];
+    var p = b.t < a.t ? b.price : a.price;
+    var q = Math.min(b.qty, a.qty);
+    // seller must still hold the goods
+    var have = Math.floor(invGet(seller, rid, cid));
+    if (have < q) q = have;
+    if (q <= 0) { // stale sell order
+      bk.asks.shift(); releaseOrder(G, a); continue;
+    }
+    var unit = p;
+    if (buyer.sink && CMAP[cid].tier === 2 && seller.tech && seller.tech.quality_control) unit = p * 1.07;
+    var gross = unit * q;
+    var fee = buyer.sink ? gross * 0.002 : gross * 0.0035;
+
+    // buyer side
+    if (!buyer.sink) {
+      buyer.escrow -= q * b.price;
+      buyer.cash -= gross + fee;
+      buyer.day.cogs += gross; buyer.day.fees += fee;
+      invAdd(buyer, rid, cid, q);
+      buyer.stats.bought[cid] = (buyer.stats.bought[cid] || 0) + q;
+      var bas = buyer.ai && buyer.ai.basis;
+      if (bas) {
+        var prev = bas[cid] || { q: 0, v: 0 };
+        bas[cid] = { q: prev.q + q, v: prev.v + gross };
+      }
+    } else {
+      G.flow.faucet += gross;
+      G.flow.by = G.flow.by || {};
+      G.flow.by[cid] = (G.flow.by[cid] || 0) + q;
+    }
+    // seller side
+    var sfee = gross * 0.0035;
+    seller.cash += gross - sfee;
+    seller.day.rev += gross; seller.day.fees += sfee;
+    invAdd(seller, rid, cid, -q);
+    resAdd(seller, rid, cid, -q);
+    seller.stats.sold[cid] = (seller.stats.sold[cid] || 0) + q;
+    G.flow.sink += sfee + (buyer.sink ? fee : fee);
+    if (seller.ai && seller.ai.basis && seller.ai.basis[cid]) {
+      var sb = seller.ai.basis[cid];
+      var used = Math.min(sb.q, q);
+      if (sb.q > 0) { sb.v -= (sb.v / sb.q) * used; sb.q -= used; }
+    }
+
+    b.qty -= q; a.qty -= q;
+    bk.last = p; bk.ema = bk.ema * 0.82 + p * 0.18;
+    bk.dayVol += q; bk.dayVal += gross;
+    bk.trades.push({ d: G.day, p: round2(p), q: q, b: b.co, s: a.co });
+    if (bk.trades.length > 60) bk.trades.shift();
+
+    if (b.qty <= 0) { bk.bids.shift(); if (buyer.orders) { var i1 = buyer.orders.indexOf(b); if (i1 >= 0) buyer.orders.splice(i1, 1); } }
+    if (a.qty <= 0) { bk.asks.shift(); if (seller.orders) { var i2 = seller.orders.indexOf(a); if (i2 >= 0) seller.orders.splice(i2, 1); } }
+  }
+}
+
+function expireOrders(G) {
+  REGIONS.forEach(function (r) {
+    COMM.forEach(function (c) {
+      var bk = book(G, r.id, c.id);
+      ["bids", "asks"].forEach(function (k) {
+        for (var i = bk[k].length - 1; i >= 0; i--) {
+          var o = bk[k][i];
+          o.ttl -= 1;
+          if (o.ttl <= 0) { bk[k].splice(i, 1); releaseOrder(G, o); }
+        }
+      });
+      sortBook(bk);
+    });
+  });
+}
+
+/* ---------- technology effects ---------- */
+function tf(co, k) { return co.tech && co.tech[k]; }
+function outMult(G, co, b) {
+  var d = BUILD[b.type], m = 1;
+  if (d.cls === "extract" && tf(co, "deep_drilling")) m *= 1.14;
+  if ((b.type === "machine_works" || b.type === "vehicle_plant") && tf(co, "precision_tools")) m *= 1.12;
+  if (G.worldTech[b.type]) m *= G.worldTech[b.type];
+  return m;
+}
+function inpMult(co, b, cid) {
+  var m = 1;
+  if (tf(co, "ore_sorting") && (b.type === "steel_mill" || b.type === "copper_refinery") &&
+      (cid === "iron_ore" || cid === "copper_ore")) m *= 0.90;
+  return m;
+}
+function energyMult(co, b) {
+  var m = 1;
+  if (tf(co, "arc_furnace") && BUILD[b.type].cls === "process") m *= 0.82;
+  if (tf(co, "cogeneration")) m *= 0.74;
+  return m;
+}
+function energyPriceMult(co) { return tf(co, "grid_contracts") ? 0.84 : 1; }
+function laborMult(co) { return (tf(co, "automation_1") ? 0.88 : 1) * (tf(co, "automation_2") ? 0.86 : 1); }
+function maintMult(co) { return (tf(co, "preventive_maint") ? 0.78 : 1) * (tf(co, "automation_2") ? 0.94 : 1); }
+function levelThroughput(b) { return [0, 1, 1.3, 1.6, 1.85][b.level] || 1; }
+
+/* ---------- production ---------- */
+function buildingActive(b) { return !b.idle && b.down <= 0; }
+
+function computeFactors(G) {
+  REGIONS.forEach(function (r) {
+    var rs = G.regionState[r.id];
+    rs.laborUse = 0; rs.euse = 0;
+  });
+  G.buildings.forEach(function (b) {
+    if (!buildingActive(b)) return;
+    var co = G.co[b.owner]; if (!co) return;
+    var d = BUILD[b.type], th = levelThroughput(b), rs = G.regionState[b.rid];
+    rs.laborUse += d.labor * th * laborMult(co);
+    rs.euse += d.energy * th * energyMult(co, b);
+  });
+  REGIONS.forEach(function (r) {
+    var rs = G.regionState[r.id];
+    var pool = r.labor * rs.laborMod;
+    var ecap = r.ecap;
+    var lu = rs.laborUse / Math.max(1, pool);
+    rs.wage = r.wage * (0.85 + 0.55 * Math.pow(Math.min(lu, 2.2), 1.6));
+    rs.laborScale = lu > 1 ? 1 / lu : 1;
+    rs.labor = pool;
+    var eu = rs.euse / Math.max(1, ecap);
+    rs.eprice = r.eprice * (0.72 + 0.85 * Math.pow(Math.min(eu, 2.2), 2)) * rs.energyMod;
+    rs.eScale = eu > 1 ? 1 / eu : 1;
+    rs.eutil = eu; rs.lutil = lu;
+  });
+}
+
+function produceAll(G) {
+  MAINT_SINK.g = G;
+  G.buildings.forEach(function (b) {
+    var co = G.co[b.owner]; if (!co || co.bankrupt) return;
+    var d = BUILD[b.type], rs = G.regionState[b.rid];
+    if (b.down > 0) { b.down--; b.util = 0; payMaint(co, b, 0.4); return; }
+    if (b.idle) { b.util = 0; payMaint(co, b, 0.4); return; }
+    if (d.cls === "support") { b.util = 1; payOps(G, co, b, 1); return; }
+
+    var th = levelThroughput(b);
+    var scale = Math.min(rs.laborScale, rs.eScale, 1) * b.cond * (b.rate === undefined ? 1 : b.rate);
+
+    // input availability
+    var k;
+    for (k in d.inp) {
+      var need = d.inp[k] * th * inpMult(co, b, k);
+      var got = invGet(co, b.rid, k);
+      if (need > 0) scale = Math.min(scale, got / need);
+    }
+    // deposit availability
+    if (d.dep) {
+      var res = rs.deposits[d.dep] || 0;
+      var full = res > 60000 ? 1 : Math.max(0, 0.35 + 0.65 * (res / 60000));
+      scale *= full;
+      if (res <= 0) scale = 0;
+    }
+    // storage room for outputs
+    var room = storageCap(G, co, b.rid) - storageUsed(G, co, b.rid);
+    var loadPer = 0;
+    for (k in d.out) loadPer += d.out[k] * th * CMAP[k].w * outMult(G, co, b);
+    if (loadPer > 0 && room < loadPer * scale) scale = Math.max(0, room / loadPer);
+    scale = clamp(scale, 0, 1);
+
+    if (scale > 0) {
+      for (k in d.inp) invAdd(co, b.rid, k, -d.inp[k] * th * inpMult(co, b, k) * scale);
+      var om = outMult(G, co, b);
+      for (k in d.out) {
+        var q = d.out[k] * th * om * scale;
+        invAdd(co, b.rid, k, q);
+        co.stats.produced[k] = (co.stats.produced[k] || 0) + q;
+        if (d.dep && rs.deposits[d.dep] !== undefined) rs.deposits[d.dep] = Math.max(0, rs.deposits[d.dep] - q);
+      }
+    }
+    b.util = scale;
+    payOps(G, co, b, scale);
+  });
+}
+function payOps(G, co, b, scale) {
+  var d = BUILD[b.type], rs = G.regionState[b.rid], th = levelThroughput(b);
+  var wages = d.labor * th * laborMult(co) * rs.wage * (0.25 + 0.75 * scale);
+  var energy = d.energy * th * energyMult(co, b) * rs.eprice * energyPriceMult(co) * (0.2 + 0.8 * scale);
+  co.cash -= wages + energy;
+  co.day.wages += wages; co.day.energy += energy;
+  G.flow.sink += wages + energy;
+  payMaint(co, b, 1);
+}
+var MAINT_SINK = { g: null };
+function payMaint(co, b, f) {
+  var d = BUILD[b.type];
+  var m = d.maint * f * maintMult(co) * (1 + (levelThroughput(b) - 1) * 0.8);
+  co.cash -= m; co.day.maint += m;
+  if (MAINT_SINK.g) MAINT_SINK.g.flow.sink += m;
+}
+
+/* ---------- consumer demand ---------- */
+function postConsumerOrders(G) {
+  var con = G.consumer;
+  // clear last tick's consumer orders
+  REGIONS.forEach(function (r) {
+    COMM.forEach(function (c) {
+      var bk = book(G, r.id, c.id);
+      for (var i = bk.bids.length - 1; i >= 0; i--) if (bk.bids[i].co === "CON") bk.bids.splice(i, 1);
+    });
+  });
+  con.orders = [];
+  REGIONS.forEach(function (r) {
+    var rs = G.regionState[r.id];
+    for (var cid in CONSUMER_GOODS) {
+      var base = CONSUMER_GOODS[cid] * (r.demand / DEMAND_WEIGHT) * G.econ * (G.growth || 1) *
+                 rs.demandMod * (G.demandMod[cid] || 1);
+      if (base <= 0) continue;
+      var p0 = CMAP[cid].p0;
+      var rungs = 6;
+      for (var i = 0; i < rungs; i++) {
+        var pf = 1.55 - i * 0.16;                 // willingness to pay, 1.55 p0 down to 0.75 p0
+        var q = base / rungs * (0.85 + 0.3 * G.rnd());
+        if (q < 0.4) continue;
+        placeOrder(G, con, "buy", cid, r.id, p0 * pf, Math.max(1, Math.round(q)), 1);
+      }
+    }
+  });
+  // state buyers created by events (public works, conflict)
+  G.events.forEach(function (ev) {
+    if (ev.buy) {
+      placeOrder(G, con, "buy", ev.buy.cid, ev.buy.rid, CMAP[ev.buy.cid].p0 * ev.buy.pf,
+                 ev.buy.qty, 1);
+    }
+  });
+}
+
+/* ---------- shipments & freight jobs ---------- */
+function startShipment(G, co, from, to, cid, qty, carrierId) {
+  qty = Math.floor(qty);
+  if (qty <= 0 || from === to) return null;
+  if (avail(co, from, cid) < qty) return null;
+  var cost = freightCost(G, co, from, to, cid, qty);
+  var load = qty * CMAP[cid].w;
+  var self = haulCap(G, co) - haulUsed(G, co) >= load;
+  if (self) cost *= 0.55;
+  if (co.cash - co.escrow < cost) return null;
+  invAdd(co, from, cid, -qty);
+  co.cash -= cost; co.day.freight += cost;
+  var s = { id: "S" + (G.nextS++), co: co.id, from: from, to: to, cid: cid, qty: qty,
+            arrive: G.day + transitDays(from, to), cost: cost, load: load,
+            carrier: self ? co.id : null };
+  G.shipments.push(s);
+  if (!self) {
+    // offered to the freight market: player and AI hauliers can take the job
+    G.jobs.push({ id: "J" + (G.nextS++), ship: s.id, from: from, to: to, cid: cid, qty: qty,
+                  load: load, pay: cost * 0.72, arrive: s.arrive, taken: null, posted: G.day });
+    G.flow.sink += cost * 0.28;
+  } else {
+    G.flow.sink += cost;
+  }
+  return s;
+}
+function takeJob(G, co, job) {
+  if (job.taken) return false;
+  if (haulCap(G, co) - haulUsed(G, co) < job.load) return false;
+  var s = null;
+  G.shipments.forEach(function (x) { if (x.id === job.ship) s = x; });
+  if (!s) return false;
+  job.taken = co.id; s.carrier = co.id;
+  s.payTo = co.id; s.pay = job.pay * (co.tech.fleet_scale ? 1.15 : 1);
+  return true;
+}
+function arriveShipments(G) {
+  for (var i = G.shipments.length - 1; i >= 0; i--) {
+    var s = G.shipments[i];
+    if (s.arrive > G.day) continue;
+    var co = G.co[s.co];
+    if (co) invAdd(co, s.to, s.cid, s.qty);
+    if (s.payTo && G.co[s.payTo]) {
+      var h = G.co[s.payTo];
+      // running the trucks costs crew and diesel, and diesel tracks the fuel market
+      var fuelIdx = 0.55 + 0.45 * (price(G, "HAL", "fuel") / CMAP.fuel.p0);
+      var runCost = s.pay * (0.30 + 0.25 * fuelIdx);
+      h.cash += s.pay - runCost;
+      h.day.rev += s.pay; h.day.freight += runCost;
+      G.flow.sink += runCost;
+    }
+    G.shipments.splice(i, 1);
+    for (var j = G.jobs.length - 1; j >= 0; j--) if (G.jobs[j].ship === s.id) G.jobs.splice(j, 1);
+  }
+  // stale untaken jobs are hauled by the open market
+  for (var k = G.jobs.length - 1; k >= 0; k--) {
+    if (!G.jobs[k].taken && G.day - G.jobs[k].posted > 1) G.jobs.splice(k, 1);
+  }
+}
+
+/* ---------- contracts ---------- */
+function postOffer(G, co, side, cid, rid, qtyPer, interval, deliveries, price) {
+  var o = { id: "K" + (G.nextK++), from: co.id, side: side, cid: cid, rid: rid,
+            qtyPer: Math.floor(qtyPer), interval: interval, deliveries: deliveries,
+            price: round2(price), posted: G.day, ttl: 8, taker: null };
+  G.offers.push(o);
+  return o;
+}
+function acceptOffer(G, co, o) {
+  if (o.taker) return false;
+  o.taker = co.id;
+  var k = { id: "K" + (G.nextK++), seller: o.side === "sell" ? o.from : co.id,
+            buyer: o.side === "sell" ? co.id : o.from, cid: o.cid, rid: o.rid,
+            qtyPer: o.qtyPer, interval: o.interval, left: o.deliveries, price: o.price,
+            next: G.day + o.interval, start: G.day, done: 0, failed: 0 };
+  G.contracts.push(k);
+  var A = G.co[k.seller], B = G.co[k.buyer];
+  if (A.contracts) A.contracts.push(k);
+  if (B.contracts) B.contracts.push(k);
+  var i = G.offers.indexOf(o); if (i >= 0) G.offers.splice(i, 1);
+  logMsg(G, G.co[o.from].name + " and " + co.name + " sign a supply contract for " +
+    o.qtyPer + " " + CMAP[o.cid].name.toLowerCase() + " x" + o.deliveries + " at $" + o.price + ".", "contract");
+  return true;
+}
+function runContracts(G) {
+  for (var i = G.contracts.length - 1; i >= 0; i--) {
+    var k = G.contracts[i];
+    if (k.next > G.day) continue;
+    var S = G.co[k.seller], B = G.co[k.buyer];
+    var value = k.qtyPer * k.price;
+    var can = S && !S.bankrupt && avail(S, k.rid, k.cid) >= k.qtyPer;
+    var pays = B && !B.bankrupt && (B.cash - B.escrow) >= value;
+    if (can && pays) {
+      invAdd(S, k.rid, k.cid, -k.qtyPer);
+      invAdd(B, k.rid, k.cid, k.qtyPer);
+      S.cash += value; S.day.rev += value;
+      B.cash -= value; B.day.cogs += value;
+      S.stats.sold[k.cid] = (S.stats.sold[k.cid] || 0) + k.qtyPer;
+      B.stats.bought[k.cid] = (B.stats.bought[k.cid] || 0) + k.qtyPer;
+      k.done++;
+      S.rep = Math.min(1.2, S.rep + 0.004); B.rep = Math.min(1.2, B.rep + 0.004);
+    } else {
+      var d = can ? B : S;
+      var pen = value * 0.25;
+      if (d) {
+        d.cash -= pen; d.day.penalty += pen; d.rep = Math.max(0.3, d.rep - 0.07);
+        G.flow.sink += pen;
+        var other = d === S ? B : S;
+        if (other) { other.cash += pen * 0.6; other.day.rev += pen * 0.6; }
+        if (d.isPlayer) logMsg(G, "Contract default: " + CMAP[k.cid].name + " delivery missed. Penalty $" +
+          Math.round(pen).toLocaleString() + ".", "bad");
+        else if (other && other.isPlayer) logMsg(G, d.name + " missed a contract delivery. You received $" +
+          Math.round(pen * 0.6).toLocaleString() + " in compensation.", "good");
+      }
+      k.failed++;
+    }
+    k.left--; k.next = G.day + k.interval;
+    if (k.left <= 0) {
+      G.contracts.splice(i, 1);
+      [S, B].forEach(function (c) { if (c && c.contracts) { var j = c.contracts.indexOf(k); if (j >= 0) c.contracts.splice(j, 1); } });
+    }
+  }
+  for (var m = G.offers.length - 1; m >= 0; m--) {
+    G.offers[m].ttl--;
+    if (G.offers[m].ttl <= 0) G.offers.splice(m, 1);
+  }
+}
+
+/* ---------- finance ---------- */
+function creditLimit(G, co) {
+  return Math.max(0, valuation(G, co) * 0.5 * co.rep - co.debt);
+}
+function borrow(G, co, amt) {
+  amt = Math.floor(amt);
+  if (amt <= 0 || amt > creditLimit(G, co)) return false;
+  co.debt += amt; co.cash += amt;
+  return true;
+}
+function repay(G, co, amt) {
+  amt = Math.min(Math.floor(amt), co.debt, Math.floor(co.cash - co.escrow));
+  if (amt <= 0) return false;
+  co.debt -= amt; co.cash -= amt;
+  return true;
+}
+function assetValue(G, co) {
+  var v = 0;
+  co.buildings.forEach(function (b) {
+    v += BUILD[b.type].cap * (0.62 + 0.2 * (levelThroughput(b) - 1)) * b.cond;
+  });
+  REGIONS.forEach(function (r) {
+    var inv = co.inv[r.id] || {};
+    for (var c in inv) v += inv[c] * price(G, r.id, c) * 0.9;
+  });
+  return v;
+}
+function valuation(G, co) { return co.cash + assetValue(G, co) - co.debt; }
+
+function dayEnd(G) {
+  G.companies.forEach(function (co) {
+    if (co.bankrupt) return;
+    // storage
+    var st = 0;
+    REGIONS.forEach(function (r) {
+      var inv = co.inv[r.id] || {};
+      for (var c in inv) st += inv[c] * CMAP[c].p0 * 0.0009;
+    });
+    co.cash -= st; co.day.storage += st; G.flow.sink += st;
+    // interest
+    var rate = (E.BASE_INTEREST + (1.1 - co.rep) * 0.05) / 365;
+    var int_ = co.debt * rate;
+    co.cash -= int_; co.day.interest += int_; G.flow.sink += int_;
+    // research
+    if (co.research) {
+      var t = TECH[co.research.id];
+      var per = t.cost / t.days;
+      if (co.cash - co.escrow < per * 1.5) {
+        co.research.stalled = true;             // the programme waits for funds
+      } else {
+        co.research.stalled = false;
+        co.cash -= per; co.day.research += per; G.flow.sink += per;
+        co.research.left--;
+      }
+      if (co.research.left <= 0) {
+        co.tech[co.research.id] = true;
+        if (co.isPlayer) logMsg(G, "Research complete: " + t.name + ". " + t.desc, "good");
+        co.research = null;
+      }
+    }
+    var p = co.day.rev - co.day.cogs - co.day.wages - co.day.energy - co.day.maint -
+            co.day.freight - co.day.interest - co.day.penalty - co.day.storage - co.day.fees - co.day.research;
+    co.taxCarry = co.taxCarry || 0;
+    if (p > 0) {
+      var taxable = Math.max(0, p - co.taxCarry);
+      co.taxCarry = Math.max(0, co.taxCarry - p);
+      var tax = taxable * E.TAX_RATE;
+      co.cash -= tax; co.day.tax = tax; p -= tax; G.flow.sink += tax;
+    } else co.taxCarry += -p;
+    co.day.profit = p;
+    for (var k in co.day) co.cum[k] += co.day[k];
+    co.salesEma = co.salesEma || {};
+    co.lastSold = co.lastSold || {};
+    for (var sc in co.stats.sold) {
+      var delta = co.stats.sold[sc] - (co.lastSold[sc] || 0);
+      co.salesEma[sc] = (co.salesEma[sc] || 0) * 0.8 + delta * 0.2;
+      co.lastSold[sc] = co.stats.sold[sc];
+    }
+    co.hist.push({ d: G.day, p: p, rev: co.day.rev, cash: co.cash, l: Object.assign({}, co.day) });
+    if (co.hist.length > 400) co.hist.shift();
+    co.valuation = valuation(G, co);
+    co.netHist.push({ d: G.day, v: co.valuation });
+    if (co.netHist.length > 400) co.netHist.shift();
+    co.day = blankLedger();
+    // reconcile escrow and reservations against live orders (kills float drift)
+    var esc = 0, res = {};
+    co.orders.forEach(function (o) {
+      if (o.side === "buy") esc += o.qty * o.price;
+      else { res[o.rid] = res[o.rid] || {}; res[o.rid][o.cid] = (res[o.rid][o.cid] || 0) + o.qty; }
+    });
+    co.escrow = esc;
+    REGIONS.forEach(function (r) {
+      var target = res[r.id] || {};
+      co.res[r.id] = {};
+      for (var c in target) co.res[r.id][c] = target[c];
+    });
+    // solvency
+    if (co.cash < 0) solvency(G, co);
+  });
+}
+function solvency(G, co) {
+  // draw on credit first
+  var need = -co.cash + 1000;
+  var lim = creditLimit(G, co);
+  if (lim > need) { borrow(G, co, Math.ceil(need)); return; }
+  // liquidate inventory
+  REGIONS.forEach(function (r) {
+    if (co.cash >= 0) return;
+    var inv = Object.assign({}, co.inv[r.id] || {});
+    for (var c in inv) {
+      if (co.cash >= 0) break;
+      var q = Math.floor(avail(co, r.id, c));
+      if (q <= 0) continue;
+      var v = q * price(G, r.id, c) * 0.7;
+      invAdd(co, r.id, c, -q); co.cash += v; co.day.rev += v;
+    }
+  });
+  // sell plant
+  while (co.cash < 0 && co.buildings.length) {
+    var b = co.buildings[co.buildings.length - 1];
+    sellBuilding(G, co, b, 0.5);
+    if (co.isPlayer) logMsg(G, "Forced sale: " + BUILD[b.type].name + " in " + RMAP[b.rid].name +
+      " sold to cover debts.", "bad");
+  }
+  if (co.cash < 0) {
+    co.bankrupt = true;
+    co.cash = 0;
+    if (co.isPlayer) { G.over = { win: false, reason: "Bankrupt on day " + G.day + "." }; }
+    logMsg(G, co.name + " has been wound up.", "bad");
+    if (!co.isPlayer) G.pendingEntrant = (G.pendingEntrant || 0) + 1;
+  }
+}
+function sellBuilding(G, co, b, factor) {
+  var v = BUILD[b.type].cap * (factor || 0.6) * b.cond * (0.7 + 0.3 * levelThroughput(b));
+  co.cash += v; co.day.rev += v;
+  var i = co.buildings.indexOf(b); if (i >= 0) co.buildings.splice(i, 1);
+  var j = G.buildings.indexOf(b); if (j >= 0) G.buildings.splice(j, 1);
+  return v;
+}
+
+/* ---------- costing helpers used by AI and UI ---------- */
+function unitCost(G, co, type, rid, useMarket) {
+  var d = BUILD[type], rs = G.regionState[rid], th = 1;
+  var c = d.labor * rs.wage * laborMult(co) + d.energy * rs.eprice * energyPriceMult(co) + d.maint * maintMult(co);
+  for (var k in d.inp) c += d.inp[k] * (useMarket ? price(G, rid, k) : CMAP[k].p0) * inpMult(co, { type: type }, k);
+  var units = 0, om = 1;
+  if (d.cls === "extract" && tf(co, "deep_drilling")) om *= 1.14;
+  if ((type === "machine_works" || type === "vehicle_plant") && tf(co, "precision_tools")) om *= 1.12;
+  for (var o in d.out) units += d.out[o] * om;
+  return units > 0 ? c / units : 0;
+}
+function varCost(G, co, type, rid) {
+  var d = BUILD[type], rs = G.regionState[rid];
+  var c = d.energy * rs.eprice * energyPriceMult(co) + d.labor * rs.wage * laborMult(co) * 0.65;
+  for (var k in d.inp) c += d.inp[k] * price(G, rid, k) * inpMult(co, { type: type }, k);
+  var units = 0, om = 1;
+  if (d.cls === "extract" && tf(co, "deep_drilling")) om *= 1.14;
+  if ((type === "machine_works" || type === "vehicle_plant") && tf(co, "precision_tools")) om *= 1.12;
+  for (var o in d.out) units += d.out[o] * om;
+  return units > 0 ? c / units : 0;
+}
+function bestNet(G, co, rid, cid) {
+  var best = price(G, rid, cid);
+  REGIONS.forEach(function (r) {
+    if (r.id === rid) return;
+    var n = price(G, r.id, cid) - freightCost(G, co, rid, r.id, cid, 1);
+    if (n > best) best = n;
+  });
+  return best;
+}
+function cheapestIn(G, co, rid, cid) {
+  var best = price(G, rid, cid);
+  REGIONS.forEach(function (r) {
+    if (r.id === rid) return;
+    var n = price(G, r.id, cid) + freightCost(G, co, r.id, rid, cid, 1);
+    if (n < best) best = n;
+  });
+  return best;
+}
+function estProfit(G, co, type, rid) {
+  var d = BUILD[type];
+  if (d.cls === "support") return 0;
+  var rs = G.regionState[rid];
+  var rev = 0, cost = d.labor * rs.wage * laborMult(co) + d.energy * rs.eprice * energyPriceMult(co) + d.maint * maintMult(co);
+  var om = 1;
+  if (d.cls === "extract" && tf(co, "deep_drilling")) om *= 1.14;
+  if ((type === "machine_works" || type === "vehicle_plant") && tf(co, "precision_tools")) om *= 1.12;
+  for (var o in d.out) rev += d.out[o] * om * bestNet(G, co, rid, o);
+  for (var k in d.inp) cost += d.inp[k] * cheapestIn(G, co, rid, k) * inpMult(co, { type: type }, k);
+  return rev - cost;
+}
+
+/* ---------- AI ---------- */
+function aiAll(G) {
+  G.companies.forEach(function (co) {
+    if (co.isPlayer || co.bankrupt) return;
+    aiTurn(G, co);
+  });
+}
+function aiTurn(G, co) {
+  var rnd = G.rnd;
+  // cancel own resting orders older than 2 days so quotes stay fresh
+  for (var i = co.orders.length - 1; i >= 0; i--) {
+    var o = co.orders[i];
+    if (o.ttl <= 2) cancelOrder(G, o);
+  }
+  var need = {};   // rid -> cid -> qty per day
+  co.buildings.forEach(function (b) {
+    if (!buildingActive(b)) return;
+    var d = BUILD[b.type], th = levelThroughput(b);
+    for (var k in d.inp) {
+      need[b.rid] = need[b.rid] || {};
+      need[b.rid][k] = (need[b.rid][k] || 0) + d.inp[k] * th * inpMult(co, b, k);
+    }
+  });
+  // 1. rail existing stock to the plants that need it
+  var rid, cid;
+  for (rid in need) {
+    for (cid in need[rid]) {
+      var shortfall = need[rid][cid] * 4 - (invGet(co, rid, cid) + incoming(G, co, rid, cid));
+      if (shortfall <= 0) continue;
+      for (var si = 0; si < REGIONS.length && shortfall > 0; si++) {
+        var src = REGIONS[si].id;
+        if (src === rid) continue;
+        var keep = (need[src] && need[src][cid]) ? need[src][cid] * 5 : 0;
+        var spare = Math.floor(avail(co, src, cid) - keep);
+        if (spare < 5) continue;
+        var qs = Math.min(spare, Math.ceil(shortfall));
+        if (startShipment(G, co, src, rid, cid, qs, null)) shortfall -= qs;
+      }
+    }
+  }
+  // 2. buy what is still missing, in whichever market lands it cheapest
+  for (rid in need) {
+    for (cid in need[rid]) {
+      var per = need[rid][cid];
+      var have = invGet(co, rid, cid) + incoming(G, co, rid, cid) + onOrderAny(G, co, cid, "buy");
+      var cover = have / Math.max(0.01, per);
+      var deficit = per * 4 - have;
+      if (deficit < per * 0.4) continue;
+      var fair = price(G, rid, cid);
+      var cap = maxPay(G, co, rid, cid);
+      var sc = Math.max(0, (G.scarce && G.scarce[cid]) || 0);
+      var urgency = (cover < 0.5 ? 1.25 : cover < 1 ? 1.14 : cover < 2 ? 1.06 : 1.02) + sc * 0.5;
+      var bid = Math.min(fair * (urgency + rnd() * 0.03), cap);
+      // a plant about to run dry lifts the offer rather than waiting on the mid
+      var la = bestAsk(G, rid, cid);
+      if (cover < 2 && la !== null && la <= cap) bid = Math.max(bid, Math.min(cap, la * 1.01));
+      var localAsk = bestAsk(G, rid, cid);
+      var buyIn = rid, buyAt = bid, bestLanded = localAsk !== null ? localAsk : bid;
+      for (var ri = 0; ri < REGIONS.length; ri++) {
+        var r2 = REGIONS[ri].id;
+        if (r2 === rid) continue;
+        var a = bestAsk(G, r2, cid);
+        if (a === null) continue;
+        var landed = a + freightCost(G, co, r2, rid, cid, 1);
+        if (landed < bestLanded * 0.99 && landed < cap) { bestLanded = landed; buyIn = r2; buyAt = Math.min(a * 1.03, cap); }
+        else if (cover < 1 && landed < cap && buyIn === rid && bestAsk(G, rid, cid) === null) {
+          bestLanded = landed; buyIn = r2; buyAt = Math.min(a * 1.03, cap);
+        }
+      }
+      var room = storageCap(G, co, buyIn) - storageUsed(G, co, buyIn);
+      deficit = Math.min(deficit, Math.max(0, room / CMAP[cid].w));
+      deficit = Math.min(deficit, (co.cash - co.escrow) * 0.35 / Math.max(0.5, buyAt));
+      if (deficit < 1 || buyAt <= 0) continue;
+      placeOrder(G, co, "buy", cid, buyIn, buyAt, Math.ceil(deficit), 3);
+    }
+  }
+  // move surplus to where it is needed or valued
+  logisticsSweep(G, co, need);
+  // sell outputs
+  var makes = {};
+  co.buildings.forEach(function (b) {
+    var d = BUILD[b.type];
+    for (var k in d.out) { makes[b.rid] = makes[b.rid] || {}; makes[b.rid][k] = (makes[b.rid][k] || 0) + d.out[k] * levelThroughput(b); }
+  });
+  REGIONS.forEach(function (r) {
+    var inv = co.inv[r.id] || {};
+    for (var cid in inv) {
+      var q = Math.floor(avail(co, r.id, cid));
+      if (q < 1) continue;
+      var reserve = (need[r.id] && need[r.id][cid] ? need[r.id][cid] * 8 : 0);
+      var sellQ = q - reserve;
+      if (sellQ < 1) continue;
+      var fair = price(G, r.id, cid);
+      var made = makes[r.id] && makes[r.id][cid];
+      var floor_ = 0;
+      if (made) {
+        var type = null;
+        co.buildings.forEach(function (b) { if (b.rid === r.id && BUILD[b.type].out[cid]) type = b.type; });
+        if (type) floor_ = varCost(G, co, type, r.id) * 1.02;   // walk-away price, not full cost
+      } else if (co.ai.basis[cid] && co.ai.basis[cid].q > 0) {
+        floor_ = co.ai.basis[cid].v / co.ai.basis[cid].q * 1.02;
+      }
+      var cover = made ? sellQ / made : 0;                       // days of unsold output
+      var bb = bestBid(G, r.id, cid);
+      var ask;
+      if (cover > 2.5 || (!made && co.arch !== "trader")) {
+        // stock is piling up: clear it into the standing bids
+        var hit = bb !== null ? bb : fair * 0.9;
+        ask = Math.max(floor_ * 0.92, Math.min(hit, fair * (0.99 - Math.min(0.12, cover * 0.02))));
+      } else {
+        var scs = (G.scarce && G.scarce[cid]) || 0;
+        ask = Math.max(floor_, fair * (1.005 + rnd() * 0.035 + Math.max(0, scs) * 0.35));
+      }
+      if (co.arch === "trader" && !made) {
+        var held = co.ai.hold = co.ai.hold || {};
+        var key = r.id + cid;
+        held[key] = (held[key] || 0) + 1;
+        ask = held[key] > 6 && bb !== null ? Math.max(floor_ * 0.95, bb) : Math.max(floor_, fair * 1.015);
+      }
+      if (bb !== null && cover > 2 && ask > bb * 1.02) ask = Math.max(floor_ * 0.9, bb);
+      var placed = placeOrder(G, co, "sell", cid, r.id, ask, Math.ceil(sellQ * (0.6 + rnd() * 0.4)), 3);
+      if (co.ai.hold && invGet(co, r.id, cid) < 1) delete co.ai.hold[r.id + cid];
+    }
+  });
+  if (co.arch === "trader") aiTrader(G, co);
+  if (co.arch === "hauler") aiHauler(G, co);
+  aiHaulJobs(G, co);
+  aiManage(G, co);
+}
+function onOrderAny(G, co, cid, side) {
+  var q = 0;
+  co.orders.forEach(function (o) { if (o.cid === cid && o.side === side) q += o.qty; });
+  return q;
+}
+function takeOffers(G, co, rid, cid, want, ceiling) {
+  var bk = book(G, rid, cid), took = 0, guard = 0;
+  while (want - took >= 1 && bk.asks.length && guard++ < 8) {
+    var a = bk.asks[0];
+    if (a.co === co.id) break;
+    if (a.price > ceiling) break;
+    var room = storageCap(G, co, rid) - storageUsed(G, co, rid);
+    var afford = (co.cash - co.escrow) * 0.6 / Math.max(0.5, a.price);
+    var q = Math.min(a.qty, want - took, Math.max(0, room / CMAP[cid].w), afford);
+    if (q < 1) break;
+    var o = placeOrder(G, co, "buy", cid, rid, a.price, Math.floor(q), 1);
+    if (!o) break;
+    took += Math.floor(q);
+    if (o.qty > 0) { cancelOrder(G, o); break; }
+  }
+  return took;
+}
+function hitBids(G, co, rid, cid, want, floorPrice) {
+  var bk = book(G, rid, cid), done = 0, guard = 0;
+  while (want - done >= 1 && bk.bids.length && guard++ < 8) {
+    var b = bk.bids[0];
+    if (b.co === co.id) break;
+    if (b.price < floorPrice) break;
+    var q = Math.min(b.qty, want - done, Math.floor(avail(co, rid, cid)));
+    if (q < 1) break;
+    var o = placeOrder(G, co, "sell", cid, rid, b.price, Math.floor(q), 1);
+    if (!o) break;
+    done += Math.floor(q);
+    if (o.qty > 0) { cancelOrder(G, o); break; }
+  }
+  return done;
+}
+function onOrder(G, co, rid, cid, side) {
+  var q = 0;
+  co.orders.forEach(function (o) { if (o.rid === rid && o.cid === cid && o.side === side) q += o.qty; });
+  return q;
+}
+function incoming(G, co, rid, cid) {
+  var q = 0;
+  G.shipments.forEach(function (s) { if (s.co === co.id && s.to === rid && s.cid === cid) q += s.qty; });
+  return q;
+}
+function maxPay(G, co, rid, cid) {
+  // the most this company can pay for an input and still clear a margin downstream
+  var best = 0;
+  co.buildings.forEach(function (b) {
+    if (b.rid !== rid) return;
+    var d = BUILD[b.type];
+    if (!d.inp[cid]) return;
+    var rs = G.regionState[rid], rev = 0, other = 0;
+    var om = outMult(G, co, b);
+    for (var o in d.out) rev += d.out[o] * om * price(G, rid, o);
+    for (var k in d.inp) if (k !== cid) other += d.inp[k] * price(G, rid, k) * inpMult(co, b, k);
+    var ops = d.labor * rs.wage * laborMult(co) + d.energy * rs.eprice * energyPriceMult(co) + d.maint * maintMult(co);
+    var room = (rev - other - ops) * 0.94 / (d.inp[cid] * inpMult(co, b, cid));
+    if (room > best) best = room;
+  });
+  return best > 0 ? best : price(G, rid, cid) * 1.02;
+}
+function logisticsSweep(G, co, need) {
+  // first duty of a fleet: feed your own plants from your own stock elsewhere
+  for (var rN in need) {
+    for (var cN in need[rN]) {
+      var per = need[rN][cN];
+      var here = invGet(co, rN, cN) + incoming(G, co, rN, cN);
+      var want = per * 5 - here;
+      if (want < per) continue;
+      var room = storageCap(G, co, rN) - storageUsed(G, co, rN);
+      want = Math.min(want, Math.max(0, room / CMAP[cN].w));
+      if (want < 1) continue;
+      REGIONS.forEach(function (src) {
+        if (want < 1 || src.id === rN) return;
+        var srcNeed = (need[src.id] && need[src.id][cN]) ? need[src.id][cN] * 4 : 0;
+        var spare = Math.floor(avail(co, src.id, cN) - srcNeed);
+        if (spare < 5) return;
+        var q = Math.min(spare, Math.floor(want));
+        if (startShipment(G, co, src.id, rN, cN, q, null)) want -= q;
+      });
+    }
+  }
+  var totalNeed = {}, totalHave = {};
+  for (var r0 in need) for (var c0 in need[r0]) totalNeed[c0] = (totalNeed[c0] || 0) + need[r0][c0];
+  REGIONS.forEach(function (r1) { var iv = co.inv[r1.id] || {}; for (var c1 in iv) totalHave[c1] = (totalHave[c1] || 0) + iv[c1]; });
+  REGIONS.forEach(function (from) {
+    var inv = co.inv[from.id] || {};
+    for (var cid in inv) {
+      var q = Math.floor(avail(co, from.id, cid));
+      if (q < 3 || q * price(G, from.id, cid) < 400) continue;
+      var localNeed = (need[from.id] && need[from.id][cid]) ? need[from.id][cid] * 8 : 0;
+      var spare = q - localNeed;
+      if (spare < 10) continue;
+      if (totalNeed[cid] && totalHave[cid] < totalNeed[cid] * 5) continue;
+      // where is it worth most, net of freight?
+      var here = price(G, from.id, cid), bestGain = 0, target = null;
+      var openBids = 0;
+      REGIONS.forEach(function (to) {
+        if (to.id === from.id) return;
+        var wants = (need[to.id] && need[to.id][cid]) ? 1 : 0;
+        var bb2 = bestBid(G, to.id, cid);
+        var there = Math.max(bb2 === null ? 0 : bb2, price(G, to.id, cid) * 0.98);
+        var depth = 0;
+        book(G, to.id, cid).bids.forEach(function (o) { if (o.price > there * 0.85) depth += o.qty; });
+        if (!wants && depth < 5) return;
+        var net = there - freightCost(G, co, from.id, to.id, cid, 1);
+        var gain = (net - here) / Math.max(0.01, here) + wants * 0.04;
+        if (gain > 0.03 && gain > bestGain) { bestGain = gain; target = to.id; openBids = wants ? spare : depth; }
+      });
+      if (target) {
+        var room2 = storageCap(G, co, target) - storageUsed(G, co, target);
+        var q2 = Math.min(spare, 400, Math.max(0, room2 / CMAP[cid].w), Math.max(20, openBids));
+        if (q2 >= 3) startShipment(G, co, from.id, target, cid, q2, null);
+      }
+    }
+  });
+}
+function aiTrader(G, co) {
+  var rnd = G.rnd;
+  COMM.forEach(function (c) {
+    REGIONS.forEach(function (r) {
+      var bk = book(G, r.id, c.id);
+      var ma = movingAvg(bk, 20);
+      var free = co.cash - co.escrow;
+      if (bk.ema < ma * 0.94 && free > 60000) {
+        var spend = free * 0.05 * co.ai.mood;
+        placeOrder(G, co, "buy", c.id, r.id, bk.ema * 1.01, Math.floor(spend / Math.max(0.5, bk.ema)), 3);
+      }
+      // cross-region arbitrage
+      REGIONS.forEach(function (r2) {
+        if (r2.id === r.id) return;
+        var a = bestAsk(G, r.id, c.id), b2 = bestBid(G, r2.id, c.id);
+        if (a === null || b2 === null) return;
+        var landed = a + freightCost(G, co, r.id, r2.id, c.id, 1);
+        if (landed < b2 * 0.94 && co.cash - co.escrow > 40000) {
+          var qty = Math.min(300, Math.floor((co.cash - co.escrow) * 0.05 / Math.max(0.5, a)));
+          if (qty > 0) placeOrder(G, co, "buy", c.id, r.id, a * 1.005, qty, 2);
+        }
+      });
+    });
+  });
+}
+function aiHauler(G, co) {
+  // hauliers also trade lightly in whatever moves through their sheds
+  if (co.cash - co.escrow > 200000 && G.rnd() < 0.3) {
+    var c = pick(G.rnd, COMM), r = pick(G.rnd, REGIONS);
+    var bk = book(G, r.id, c.id);
+    if (bk.ema < movingAvg(bk, 20) * 0.93)
+      placeOrder(G, co, "buy", c.id, r.id, bk.ema * 1.01, Math.floor(40000 / Math.max(0.5, bk.ema)), 2);
+  }
+}
+function aiHaulJobs(G, co) {
+  if (haulCap(G, co) <= 0) return;
+  G.jobs.forEach(function (j) {
+    if (j.taken) return;
+    if (G.rnd() < 0.55) takeJob(G, co, j);
+  });
+}
+function aiManage(G, co) {
+  // working capital: borrow before the yard goes quiet
+  var ops = dailyOps(G, co);
+  if (co.cash - co.escrow < ops * 6) {
+    var want = Math.ceil(ops * 12);
+    var lim = creditLimit(G, co);
+    if (lim > 1000) borrow(G, co, Math.min(want, Math.floor(lim)));
+  } else if (co.debt > 0 && co.cash - co.escrow > ops * 30) {
+    repay(G, co, Math.floor((co.cash - co.escrow) - ops * 25));
+  }
+  // rate management: firms slow the line before they stop it
+  co.buildings.forEach(function (b) {
+    var d0 = BUILD[b.type];
+    if (d0.cls === "support" || b.idle) return;
+    if (b.rate === undefined) b.rate = 1;
+    var worst = 0;
+    for (var oc0 in d0.out) {
+      var stock = invGet(co, b.rid, oc0);
+      var sales = Math.max(0.5, (co.salesEma && co.salesEma[oc0]) || 0);
+      var ownUse = 0;
+      co.buildings.forEach(function (b4) { if (b4.rid === b.rid && BUILD[b4.type].inp[oc0]) ownUse += BUILD[b4.type].inp[oc0] * levelThroughput(b4) * (b4.rate || 1); });
+      var cov0 = stock / (sales + ownUse);
+      if (cov0 > worst) worst = cov0;
+    }
+    var sellable = false;
+    for (var oc1 in d0.out) {
+      if (price(G, b.rid, oc1) > unitCost(G, co, b.type, b.rid, true) * 1.05) sellable = true;
+      if (bestNet(G, co, b.rid, oc1) > price(G, b.rid, oc1) * 1.02) sellable = true;
+    }
+    if (worst > 8 && !sellable) b.rate = Math.max(0.3, b.rate - 0.15);
+    else if (worst < 5 || sellable) b.rate = Math.min(1, b.rate + 0.2);
+  });
+  // shut-down decisions follow variable cost, not full cost, with hysteresis
+  co.buildings.forEach(function (b) {
+    var d = BUILD[b.type];
+    if (d.cls === "support") return;
+    if (b.cool === undefined) b.cool = G.day + Math.floor(G.rnd() * 14);
+    if (G.day < b.cool) return;
+    var vc = varCost(G, co, b.type, b.rid);
+    var rev = 0, units = 0, om = outMult(G, co, b);
+    for (var o in d.out) { rev += d.out[o] * om * bestNet(G, co, b.rid, o); units += d.out[o] * om; }
+    var unitRev = units > 0 ? rev / units : 0;
+    if (!b.idle) {
+      if (unitRev < vc * 0.99) b.streak++; else b.streak = 0;
+      if (b.streak > 5) {
+        b.idle = true; b.streak = 0; b.cool = G.day + 10 + Math.floor(G.rnd() * 12);
+        logMsg(G, co.name + " idles a " + d.name.toLowerCase() + " in " + RMAP[b.rid].name + ".", "market");
+      }
+    } else {
+      if (unitRev > vc * 1.12) b.streak++; else b.streak = 0;
+      if (b.streak > 3) {
+        b.idle = false; b.streak = 0; b.cool = G.day + 10 + Math.floor(G.rnd() * 12);
+        logMsg(G, co.name + " restarts a " + d.name.toLowerCase() + " in " + RMAP[b.rid].name + ".", "market");
+      }
+    }
+  });
+  // yards clogged: build sheds rather than stopping the line
+  var full = {};
+  co.buildings.forEach(function (b) {
+    if (storageUsed(G, co, b.rid) > storageCap(G, co, b.rid) * 0.9) full[b.rid] = 1;
+  });
+  for (var fr in full) {
+    if (!canBuild(G, co, "warehouse", fr).ok) continue;
+    if (co.cash - co.escrow > BUILD.warehouse.cap * 2.5 && G.day - co.ai.lastBuild > 4) {
+      addBuilding(G, co, "warehouse", fr); co.ai.lastBuild = G.day; break;
+    }
+  }
+  // expansion
+  if (G.day - co.ai.lastBuild < 25) return;
+  var listOwn = E.ARCH[co.arch].build;
+  if (!listOwn.length) return;   // traders and hauliers stay out of plant
+  var list = [];
+  for (var bt in BUILD) if (BUILD[bt].cls !== "support") list.push(bt);
+  var best = null;
+  list.forEach(function (type) {
+    REGIONS.forEach(function (r) {
+      var d = BUILD[type];
+      if (d.dep && !(G.regionState[r.id].deposits[d.dep] > 20000)) return;
+      var rs2 = G.regionState[r.id];
+      if ((rs2.lutil || 0) > 0.92 || (rs2.eutil || 0) > 0.92) return;  // no crews, no power
+      if (!canBuild(G, co, type, r.id).ok) return;
+      var p = estProfit(G, co, type, r.id);
+      var pay = p > 0 ? d.cap / p : 9999;
+      // do not build into a market with no buyers or a wall of unsold stock
+      var liquid = true;
+      for (var oc in d.out) {
+        var bal = G.balance[oc];
+        // a shortage is when the world actually makes less than it burns
+        if (bal && (bal.made || 0) > (bal.used || 0) * 0.97) liquid = false;
+        var mine = 0;
+        co.buildings.forEach(function (b3) { if (BUILD[b3.type].out[oc]) mine += BUILD[b3.type].out[oc] * levelThroughput(b3); });
+        if (bal && bal.cap > 0 && mine / bal.cap > 0.55) liquid = false;
+        var bk2 = book(G, r.id, oc);
+        var restingAsk = 0;
+        bk2.asks.forEach(function (o) { restingAsk += o.qty; });
+        if (restingAsk > d.out[oc] * 8) liquid = false;
+        if (price(G, r.id, oc) < unitCost(G, co, type, r.id, true) * 1.18) liquid = false;
+      }
+      // only add capacity when what you already own is running hot
+      var own = 0, ownUtil = 0;
+      co.buildings.forEach(function (b2) { if (b2.type === type) { own++; ownUtil += b2.idle ? 0 : b2.util; } });
+      if (own > 0 && ownUtil / own < 0.8) liquid = false;
+      if (liquid && pay < 45 && (!best || pay < best.pay)) best = { type: type, rid: r.id, pay: pay, cap: d.cap };
+    });
+  });
+  if (!best) return;
+  var freeCash = co.cash - co.escrow;
+  if (freeCash < best.cap * 1.35) {
+    if (best.pay < 35 && creditLimit(G, co) > best.cap * 1.2 && co.debt < valuation(G, co) * 0.35) {
+      borrow(G, co, Math.ceil(best.cap * 1.2));
+    } else return;
+  }
+  if (co.cash - co.escrow >= best.cap * 1.15 + dailyOps(G, co) * 8) {
+    addBuilding(G, co, best.type, best.rid);
+    co.ai.lastBuild = G.day;
+    logMsg(G, co.name + " opens a " + BUILD[best.type].name.toLowerCase() + " in " + RMAP[best.rid].name + ".", "market");
+  }
+  // support build-out
+  if (co.arch !== "trader" && G.rnd() < 0.15 && co.cash - co.escrow > 120000) {
+    var r2 = pick(G.rnd, REGIONS);
+    var own = co.buildings.filter(function (b) { return b.rid === r2.id; }).length;
+    if (own > 2 && storageUsed(G, co, r2.id) > storageCap(G, co, r2.id) * 0.8)
+      addBuilding(G, co, "warehouse", r2.id);
+  }
+  // AI answers open contract offers
+  G.offers.forEach(function (o) {
+    if (o.taker || o.from === co.id) return;
+    var fair = price(G, o.rid, o.cid);
+    if (o.side === "sell") {
+      var wants = false;
+      co.buildings.forEach(function (b) { if (b.rid === o.rid && BUILD[b.type].inp[o.cid]) wants = true; });
+      if (co.arch === "trader") wants = true;
+      if (wants && o.price <= fair * (0.99 + G.rnd() * 0.04) && co.cash - co.escrow > o.price * o.qtyPer * 2)
+        acceptOffer(G, co, o);
+    } else {
+      var makes = false;
+      co.buildings.forEach(function (b) { if (b.rid === o.rid && BUILD[b.type].out[o.cid]) makes = true; });
+      if (co.arch === "trader" && avail(co, o.rid, o.cid) > o.qtyPer) makes = true;
+      if (makes && o.price >= fair * (1.01 - G.rnd() * 0.03)) acceptOffer(G, co, o);
+    }
+  });
+}
+function movingVol(bk, n) {
+  var h = bk.hist, s = 0, c = 0;
+  for (var i = h.length - 1; i >= 0 && c < n; i--, c++) s += h[i].v || 0;
+  return c ? s / c : 0;
+}
+function movingAvg(bk, n) {
+  var h = bk.hist, s = 0, c = 0;
+  for (var i = h.length - 1; i >= 0 && c < n; i--, c++) s += h[i].p;
+  return c ? s / c : bk.ema;
+}
+
+/* Standing orders: the office keeps the wheels turning while you think about
+   something else. Deliberately unambitious - it quotes at the market, never
+   against it, so anyone working the book by hand will do better. */
+function playerStanding(G) {
+  var co = G.player;
+  if (!co || co.bankrupt) return;
+  var need = {}, makes = {};
+  co.buildings.forEach(function (b) {
+    var d = BUILD[b.type], th = levelThroughput(b);
+    if (d.cls === "support" || b.idle || b.down > 0) return;
+    if (b.autoBuy) for (var k in d.inp) {
+      need[b.rid] = need[b.rid] || {};
+      need[b.rid][k] = (need[b.rid][k] || 0) + d.inp[k] * th * inpMult(co, b, k);
+    }
+    if (b.autoSell) for (var o in d.out) {
+      makes[b.rid] = makes[b.rid] || {};
+      makes[b.rid][o] = (makes[b.rid][o] || 0) + d.out[o] * th;
+    }
+  });
+  var useAnywhere = {};
+  co.buildings.forEach(function (b) {
+    var d = BUILD[b.type];
+    for (var k in d.inp) useAnywhere[k] = (useAnywhere[k] || 0) + d.inp[k] * levelThroughput(b);
+  });
+  // restock
+  for (var rid in need) {
+    for (var cid in need[rid]) {
+      var per = need[rid][cid];
+      var have = invGet(co, rid, cid) + incoming(G, co, rid, cid) + onOrder(G, co, rid, cid, "buy");
+      var want = per * 3 - have;
+      if (want < per * 0.5) continue;
+      var cap = maxPay(G, co, rid, cid);
+      var p = Math.min(price(G, rid, cid) * 1.03, cap);
+      var la = bestAsk(G, rid, cid);
+      if (la !== null && la <= cap && la > p) p = la * 1.005;
+      want = Math.min(want, (co.cash - co.escrow) * 0.3 / Math.max(0.5, p));
+      if (want >= 1 && p > 0) {
+        var ord = placeOrder(G, co, "buy", cid, rid, p, Math.ceil(want), 2);
+        if (ord) ord.auto = true;
+      }
+    }
+  }
+  // the traffic office takes loads that fit the idle fleet
+  if (co.autoHaul !== false && haulCap(G, co) > 0) {
+    G.jobs.forEach(function (j) {
+      if (j.taken) return;
+      if (haulCap(G, co) - haulUsed(G, co) < j.load) return;
+      takeJob(G, co, j);
+    });
+  }
+  // shift output
+  for (var r2 in makes) {
+    for (var c2 in makes[r2]) {
+      var keep = (need[r2] && need[r2][c2]) ? need[r2][c2] * 3 : 0;
+      var q = Math.floor(avail(co, r2, c2) - keep);
+      if (q < 1) continue;
+      var floor2 = varCost(G, co, typeMaking(co, r2, c2), r2) * 1.02;
+      var ask = Math.max(floor2, price(G, r2, c2) * 0.995);
+      var o2 = placeOrder(G, co, "sell", c2, r2, ask, q, 2);
+      if (o2) o2.auto = true;
+    }
+  }
+}
+function typeMaking(co, rid, cid) {
+  var t = null;
+  co.buildings.forEach(function (b) { if (b.rid === rid && BUILD[b.type].out[cid]) t = b.type; });
+  return t || "warehouse";
+}
+
+/* ---------- events ---------- */
+function eventTick(G) {
+  for (var i = G.events.length - 1; i >= 0; i--) {
+    var ev = G.events[i];
+    ev.left--;
+    if (ev.left <= 0) { if (ev.undo) ev.undo(G); G.events.splice(i, 1); }
+  }
+  if (G.day < 12) return;
+  if (G.rnd() > 0.065) return;
+  fireEvent(G);
+}
+function fireEvent(G) {
+  var rnd = G.rnd;
+  var kind = pick(rnd, E.EVENTS);
+  // one slump, one war, one blackout at a time
+  var solo = { recession:1, conflict:1, energy_shortage:1, public_works:1 };
+  if (solo[kind]) { for (var i = 0; i < G.events.length; i++) if (G.events[i].kind === kind) return; }
+  var r = pick(rnd, REGIONS);
+  var ev = { kind: kind, left: 10, day: G.day };
+  switch (kind) {
+    case "mine_collapse": {
+      var mines = G.buildings.filter(function (b) { return BUILD[b.type].cls === "extract" && !b.idle; });
+      if (!mines.length) return;
+      var m = pick(rnd, mines);
+      m.down = 6 + Math.floor(rnd() * 9);
+      logMsg(G, "Shaft collapse at a " + BUILD[m.type].name.toLowerCase() + " in " + RMAP[m.rid].name +
+        ". Out of action for " + m.down + " days.", "event");
+      return;
+    }
+    case "discovery": {
+      var dep = pick(rnd, ["iron_ore", "coal", "copper_ore", "crude_oil", "timber"]);
+      var rs = G.regionState[r.id];
+      rs.deposits[dep] = (rs.deposits[dep] || 0) + 180000 + Math.floor(rnd() * 320000);
+      logMsg(G, "Survey finds new " + CMAP[dep].name.toLowerCase() + " reserves in " + r.name + ".", "event");
+      return;
+    }
+    case "energy_shortage": {
+      var rs2 = G.regionState[r.id];
+      rs2.energyMod *= 1.8; ev.left = 12 + Math.floor(rnd() * 16);
+      ev.undo = function (g) { g.regionState[r.id].energyMod /= 1.8; };
+      logMsg(G, "Power rationing in " + r.name + ". Industrial tariffs jump.", "event");
+      break;
+    }
+    case "plant_fire": {
+      var pl = G.buildings.filter(function (b) { return BUILD[b.type].cls !== "extract" && BUILD[b.type].cls !== "support"; });
+      if (!pl.length) return;
+      var p = pick(rnd, pl);
+      p.down = 5 + Math.floor(rnd() * 9); p.cond = Math.max(0.55, p.cond - 0.2);
+      logMsg(G, "Fire at a " + BUILD[p.type].name.toLowerCase() + " in " + RMAP[p.rid].name + ".", "event");
+      return;
+    }
+    case "route_closed": {
+      var a = pick(rnd, REGIONS), b = pick(rnd, REGIONS);
+      if (a.id === b.id) return;
+      var key = a.id < b.id ? a.id + "|" + b.id : b.id + "|" + a.id;
+      G.freightMod[key] = (G.freightMod[key] || 1) * 2.2;
+      ev.left = 8 + Math.floor(rnd() * 14);
+      ev.undo = function (g) { g.freightMod[key] /= 2.2; };
+      logMsg(G, "The " + a.name + " to " + b.name + " road is washed out. Freight rates double.", "event");
+      break;
+    }
+    case "demand_surge": {
+      var cid = pick(rnd, ["machines", "vehicles", "constr", "fuel"]);
+      G.demandMod[cid] = (G.demandMod[cid] || 1) * 1.6;
+      ev.left = 14 + Math.floor(rnd() * 20);
+      ev.undo = function (g) { g.demandMod[cid] /= 1.6; };
+      logMsg(G, "Order books swell: demand for " + CMAP[cid].name.toLowerCase() + " is up sharply.", "event");
+      break;
+    }
+    case "breakthrough": {
+      var types = ["steel_mill", "oil_refinery", "machine_works", "sawmill", "copper_refinery"];
+      var t = pick(rnd, types);
+      G.worldTech[t] = (G.worldTech[t] || 1) * 1.06;
+      logMsg(G, "A new process raises " + BUILD[t].name.toLowerCase() + " yields industry-wide.", "event");
+      return;
+    }
+    case "public_works": {
+      ev.buy = { cid: "constr", rid: pick(rnd, REGIONS).id, pf: 1.18, qty: 40 + Math.floor(rnd() * 60) };
+      ev.left = 20 + Math.floor(rnd() * 25);
+      logMsg(G, "State infrastructure programme announced. Building material demand climbs.", "event");
+      break;
+    }
+    case "conflict": {
+      G.demandMod.fuel = (G.demandMod.fuel || 1) * 1.5;
+      ev.buy = { cid: "vehicles", rid: "MER", pf: 1.22, qty: 4 + Math.floor(rnd() * 6) };
+      ev.left = 18 + Math.floor(rnd() * 25);
+      ev.undo = function (g) { g.demandMod.fuel /= 1.5; };
+      logMsg(G, "Fighting on the northern frontier. Fuel and vehicle demand spikes.", "event");
+      break;
+    }
+    case "recession": {
+      G.econ *= 0.74; ev.left = 30 + Math.floor(rnd() * 35);
+      ev.undo = function (g) { g.econ /= 0.74; };
+      logMsg(G, "Credit tightens and orders thin out. The economy is contracting.", "event");
+      break;
+    }
+    case "strike": {
+      var rs3 = G.regionState[r.id];
+      rs3.laborMod *= 0.6; ev.left = 8 + Math.floor(rnd() * 10);
+      ev.undo = function (g) { g.regionState[r.id].laborMod /= 0.6; };
+      logMsg(G, "Labour walkout in " + r.name + ". Crews are short and wages rising.", "event");
+      break;
+    }
+    case "glut": {
+      var g2 = pick(rnd, ["iron_ore", "coal", "copper_ore", "crude_oil", "timber", "steel"]);
+      var rr = pick(rnd, REGIONS);
+      // foreign cargo lands and is dumped on the local book
+      var qty = 400 + Math.floor(rnd() * 900);
+      var seller = G.co["CON"];
+      invAdd(seller, rr.id, g2, qty);
+      placeOrder(G, seller, "sell", g2, rr.id, CMAP[g2].p0 * 0.78, qty, 4);
+      logMsg(G, "Imported " + CMAP[g2].name.toLowerCase() + " floods " + rr.name + " at distressed prices.", "event");
+      return;
+    }
+  }
+  G.events.push(ev);
+}
+
+/* ---------- log ---------- */
+function logMsg(G, text, kind) {
+  G.log.unshift({ d: G.day, t: text, k: kind || "info" });
+  if (G.log.length > 220) G.log.pop();
+}
+
+/* Mark each book once a day, while the day's quotes are still standing.
+   Traded volume sets the price; an untraded book drifts toward whichever
+   side is left showing - unsold asks pull the price down, unfilled bids lift it. */
+/* What a quiet local market is worth, judged by what other regions pay net of freight. */
+function parity(G, rid, cid) {
+  var best = null;
+  REGIONS.forEach(function (r) {
+    if (r.id === rid) return;
+    var bk = book(G, r.id, cid);
+    var netted = bk.ema - freightRate(G, rid, r.id, cid);
+    if (best === null || netted > best) best = netted;
+  });
+  if (best === null) return CMAP[cid].p0;
+  return clamp(best, CMAP[cid].p0 * 0.45, CMAP[cid].p0 * 1.8);
+}
+function markBooks(G) {
+  REGIONS.forEach(function (r) {
+    COMM.forEach(function (c) {
+      var bk = book(G, r.id, c.id);
+      var bb = bestBid(G, r.id, c.id), ba = bestAsk(G, r.id, c.id);
+      var target;
+      if (bk.dayVol > 0) target = bk.dayVal / bk.dayVol;
+      else if (bb !== null && ba !== null) target = (bb + ba) / 2;
+      else if (ba !== null) target = Math.min(bk.ema, ba) * 0.97;
+      else if (bb !== null) target = Math.max(bk.ema, bb) * 1.03;
+      else target = parity(G, r.id, c.id);
+      var w = bk.dayVol > 0 ? 0.30 : 0.20;
+      bk.ema = bk.ema * (1 - w) + target * w;
+      // beyond this band, foreign cargo or foreign buyers would step in
+      bk.ema = clamp(bk.ema, CMAP[c.id].p0 * 0.45, CMAP[c.id].p0 * 1.8);
+    });
+  });
+}
+
+/* ---------- daily tick ---------- */
+function tick(G) {
+  if (G.over) return;
+  G.flow = { faucet: 0, sink: 0, by: {} };
+  eventTick(G);
+  computeFactors(G);
+  produceAll(G);
+  postConsumerOrders(G);
+  aiAll(G);
+  playerStanding(G);
+  REGIONS.forEach(function (r) { COMM.forEach(function (c) { matchBook(G, r.id, c.id); }); });
+  runContracts(G);
+  arriveShipments(G);
+  updateBalance(G);
+  markBooks(G);
+  expireOrders(G);
+  dayEnd(G);
+  // price history and volume roll
+  REGIONS.forEach(function (r) {
+    COMM.forEach(function (c) {
+      var bk = book(G, r.id, c.id);
+      bk.hist.push({ d: G.day, p: round2(bk.ema), v: bk.dayVol });
+      if (bk.hist.length > 400) bk.hist.shift();
+      bk.vol = bk.dayVol; bk.dayVol = 0; bk.dayVal = 0;
+    });
+  });
+  // the wider economy grows slowly, which is what makes new capacity worth building
+  G.growth = (G.growth || 1) * 1.0016;
+  // timber regrows
+  REGIONS.forEach(function (r) {
+    var rs = G.regionState[r.id];
+    if (rs.deposits.timber !== undefined) rs.deposits.timber += 55;
+  });
+  // persistent shortages attract new capital
+  if (G.day % 25 === 0) {
+    COMM.forEach(function (c) {
+      var b = G.balance[c.id];
+      if (b && b.cap > 0 && b.used > b.cap * 1.15 && price(G, "HAL", c.id) > c.p0 * 1.15)
+        G.pendingEntrant = Math.min(3, (G.pendingEntrant || 0) + 1);
+    });
+  }
+  var alive = 0;
+  G.companies.forEach(function (c) { if (!c.bankrupt) alive++; });
+  if (G.pendingEntrant && G.day % 12 === 0 && alive < 13) {
+    G.pendingEntrant--;
+    newEntrant(G);
+  }
+  G.day++;
+  checkGoals(G);
+}
+
+/* Rolling ten-day view of what the world makes and what it burns. */
+function updateBalance(G) {
+  var made = {}, used = {}, cap = {};
+  G.buildings.forEach(function (b) {
+    var d = BUILD[b.type], th = levelThroughput(b), co = G.co[b.owner];
+    if (!co) return;
+    var om = outMult(G, co, b);
+    for (var o in d.out) {
+      cap[o] = (cap[o] || 0) + d.out[o] * th * om;
+      if (buildingActive(b)) made[o] = (made[o] || 0) + d.out[o] * th * om * b.util;
+    }
+    // half what plants actually burn, half what they would burn if fed: a starved
+    // chain must still register as short, without pricing in idle nameplate
+    for (var i in d.inp) if (buildingActive(b))
+      used[i] = (used[i] || 0) + d.inp[i] * th * (0.45 * b.util + 0.55 * (b.rate || 1));
+  });
+  REGIONS.forEach(function (r) {
+    for (var cid in CONSUMER_GOODS) {
+      used[cid] = (used[cid] || 0) + CONSUMER_GOODS[cid] * (r.demand / DEMAND_WEIGHT) * G.econ * (G.growth || 1) *
+        G.regionState[r.id].demandMod * (G.demandMod[cid] || 1);
+    }
+  });
+  G.scarce = G.scarce || {};
+  COMM.forEach(function (c) {
+    var b0 = G.balance[c.id] || { made: 0, used: 0, cap: 0 };
+    G.balance[c.id] = {
+      made: b0.made * 0.85 + (made[c.id] || 0) * 0.15,
+      used: b0.used * 0.85 + (used[c.id] || 0) * 0.15,
+      cap: cap[c.id] || 0
+    };
+    var bb2 = G.balance[c.id];
+    var short = bb2.made > 0 ? (bb2.used / Math.max(1, bb2.made) - 1) : 0;
+    G.scarce[c.id] = clamp(short, -0.4, 0.6);
+  });
+}
+
+/* A failed firm's ground does not stay idle for long. */
+function newEntrant(G) {
+  var used = {}; G.companies.forEach(function (c) { used[c.name] = 1; });
+  var name = null;
+  for (var i = 0; i < E.NAMES.length; i++) if (!used[E.NAMES[i]]) { name = E.NAMES[i]; break; }
+  if (!name) name = "Consortium " + G.day;
+  var archs = ["extractor", "processor", "manufacturer", "trader", "hauler"];
+  var arch = archs[Math.floor(G.rnd() * archs.length)];
+  var co = newCompany(G, name, arch, 600000, false);
+  // the receivers hand them a going concern in whatever the world is short of
+  var short = null, gap = 0;
+  COMM.forEach(function (c) {
+    var b = G.balance[c.id];
+    if (!b) return;
+    var d = (b.used - b.made) / Math.max(1, b.used);
+    if (d > gap) { gap = d; short = c.id; }
+  });
+  var type = "warehouse";
+  for (var t in BUILD) if (BUILD[t].out[short]) type = t;
+  var rid = "HAL";
+  if (BUILD[type].dep) {
+    REGIONS.forEach(function (r) { if ((G.regionState[r.id].deposits[BUILD[type].dep] || 0) > 50000) rid = r.id; });
+  }
+  if (canBuild(G, co, type, rid).ok) addBuilding(G, co, type, rid, true);
+  if (canBuild(G, co, type, rid).ok) addBuilding(G, co, type, rid, true);
+  if (canBuild(G, co, "warehouse", rid).ok) addBuilding(G, co, "warehouse", rid, true);
+  if (!co.buildings.length) { addBuilding(G, co, "warehouse", "HAL", true); }
+  logMsg(G, name + " enters the market with " + BUILD[type].name.toLowerCase() + " capacity in " + RMAP[rid].name + ".", "market");
+}
+
+/* ---------- goals ---------- */
+var GOALS = [
+  { id:"solvent",  name:"Turn a profit for 30 straight days", test: function (G, co) {
+      if (co.hist.length < 30) return false;
+      return co.hist.slice(-30).every(function (h) { return h.p > 0; }); } },
+  { id:"integrate", name:"Own an extraction site, a processing plant and a factory", test: function (G, co) {
+      var t = {}; co.buildings.forEach(function (b) { t[BUILD[b.type].cls] = 1; });
+      return t.extract && t.process && t.factory; } },
+  { id:"regional", name:"Operate in four regions", test: function (G, co) {
+      var r = {}; co.buildings.forEach(function (b) { r[b.rid] = 1; });
+      return Object.keys(r).length >= 4; } },
+  { id:"share",    name:"Take 40% of one commodity's traded volume", test: function (G, co) {
+      var sh = marketShare(G, co); var best = 0;
+      for (var k in sh) best = Math.max(best, sh[k]);
+      return best >= 0.4; } },
+  { id:"val5",     name:"Reach a company valuation of $1,500,000", test: function (G, co) {
+      return co.valuation >= 1500000; } },
+  { id:"val25",    name:"Reach a company valuation of $5,000,000", test: function (G, co) {
+      return co.valuation >= 5000000; } },
+  { id:"profit10", name:"Bank $2,000,000 of cumulative profit", test: function (G, co) {
+      return co.cum.profit >= 2000000; } }
+];
+function checkGoals(G) {
+  var co = G.player; if (!co || co.bankrupt) return;
+  co.goals = co.goals || {};
+  GOALS.forEach(function (g) {
+    if (co.goals[g.id]) return;
+    if (g.test(G, co)) {
+      co.goals[g.id] = G.day;
+      logMsg(G, "Milestone: " + g.name + ".", "good");
+      if (g.id === "val25" || g.id === "val5m") G.over = { win: true, reason: "You built one of the great industrial houses." };
+    }
+  });
+}
+function marketShare(G, co) {
+  var mine = {}, all = {};
+  G.companies.forEach(function (c) {
+    for (var k in c.stats.sold) {
+      all[k] = (all[k] || 0) + c.stats.sold[k];
+      if (c === co) mine[k] = (mine[k] || 0) + c.stats.sold[k];
+    }
+  });
+  var out = {};
+  for (var k2 in all) if (all[k2] > 50) out[k2] = (mine[k2] || 0) / all[k2];
+  return out;
+}
+
+/* ---------- market intelligence (imperfect without the terminal) ---------- */
+function marketView(G, co, rid, cid) {
+  var bk = book(G, rid, cid);
+  var full = !!(co && co.tech && co.tech.market_terminal);
+  function agg(arr, n) {
+    var levels = [], map = {};
+    arr.forEach(function (o) {
+      var p = full ? o.price : Math.round(o.price * 20) / 20;
+      if (!map[p]) { map[p] = { price: p, qty: 0, mine: 0 }; levels.push(map[p]); }
+      map[p].qty += o.qty;
+      if (co && o.co === co.id) map[p].mine += o.qty;
+    });
+    return levels.slice(0, n);
+  }
+  var supply = 0, demand = 0;
+  bk.asks.forEach(function (o) { supply += o.qty; });
+  bk.bids.forEach(function (o) { demand += o.qty; });
+  if (!full) {
+    supply = Math.round(supply * (0.8 + G.rnd() * 0.4) / 10) * 10;
+    demand = Math.round(demand * (0.8 + G.rnd() * 0.4) / 10) * 10;
+  }
+  return {
+    bids: agg(bk.bids, full ? 12 : 4), asks: agg(bk.asks, full ? 12 : 4),
+    last: bk.last, ema: bk.ema, vol: bk.vol, supply: supply, demand: demand,
+    trades: full ? bk.trades.slice(-14) : bk.trades.slice(-6).map(function (t) {
+      return { d: t.d, p: t.p, q: t.q, b: "", s: "" }; }),
+    hist: bk.hist
+  };
+}
+
+/* ---------- player actions ---------- */
+var act = {
+  order: function (G, side, cid, rid, price, qty) { return placeOrder(G, G.player, side, cid, rid, price, qty, 6); },
+  cancel: function (G, id) {
+    var o = null;
+    G.player.orders.forEach(function (x) { if (x.id === id) o = x; });
+    return o ? cancelOrder(G, o) : false;
+  },
+  build: function (G, type, rid) {
+    var co = G.player, d = BUILD[type];
+    if (co.cash - co.escrow < d.cap) return { ok: false, msg: "Not enough free cash." };
+    var permit = canBuild(G, co, type, rid);
+    if (!permit.ok) return permit;
+    addBuilding(G, co, type, rid);
+    logMsg(G, "Construction complete: " + d.name + " in " + RMAP[rid].name + ".", "good");
+    return { ok: true };
+  },
+  upgrade: function (G, bid) {
+    var co = G.player, b = null;
+    co.buildings.forEach(function (x) { if (x.id === bid) b = x; });
+    if (!b) return { ok: false, msg: "No such site." };
+    if (b.level >= 4) return { ok: false, msg: "Already at maximum capacity." };
+    var cost = BUILD[b.type].cap * 0.7 * b.level;
+    if (co.cash - co.escrow < cost) return { ok: false, msg: "Not enough free cash." };
+    co.cash -= cost; co.day.capex += cost; b.level++;
+    return { ok: true };
+  },
+  autohaul: function (G) { G.player.autoHaul = G.player.autoHaul === false; return { ok: true }; },
+  standing: function (G, bid, which) {
+    G.player.buildings.forEach(function (b) {
+      if (b.id !== bid) return;
+      if (which === "buy") b.autoBuy = !b.autoBuy; else b.autoSell = !b.autoSell;
+    });
+    return { ok: true };
+  },
+  toggleIdle: function (G, bid) {
+    G.player.buildings.forEach(function (b) { if (b.id === bid) b.idle = !b.idle; });
+    return { ok: true };
+  },
+  sell: function (G, bid) {
+    var co = G.player, b = null;
+    co.buildings.forEach(function (x) { if (x.id === bid) b = x; });
+    if (!b) return { ok: false };
+    var v = sellBuilding(G, co, b, 0.62);
+    logMsg(G, "Sold " + BUILD[b.type].name.toLowerCase() + " in " + RMAP[b.rid].name + " for $" + Math.round(v).toLocaleString() + ".", "info");
+    return { ok: true };
+  },
+  ship: function (G, from, to, cid, qty) {
+    var s = startShipment(G, G.player, from, to, cid, qty, null);
+    return s ? { ok: true } : { ok: false, msg: "Cannot dispatch that load." };
+  },
+  takeJob: function (G, jid) {
+    var j = null;
+    G.jobs.forEach(function (x) { if (x.id === jid) j = x; });
+    if (!j) return { ok: false, msg: "Job already taken." };
+    return takeJob(G, G.player, j) ? { ok: true } : { ok: false, msg: "No spare haulage capacity." };
+  },
+  offer: function (G, side, cid, rid, qtyPer, interval, deliveries, price) {
+    postOffer(G, G.player, side, cid, rid, qtyPer, interval, deliveries, price);
+    return { ok: true };
+  },
+  acceptOffer: function (G, oid) {
+    var o = null;
+    G.offers.forEach(function (x) { if (x.id === oid) o = x; });
+    if (!o) return { ok: false, msg: "Offer withdrawn." };
+    return acceptOffer(G, G.player, o) ? { ok: true } : { ok: false, msg: "Offer withdrawn." };
+  },
+  research: function (G, id) {
+    var co = G.player, t = TECH[id];
+    if (co.research) return { ok: false, msg: "Already running a programme." };
+    if (co.tech[id]) return { ok: false, msg: "Already held." };
+    for (var i = 0; i < t.req.length; i++) if (!co.tech[t.req[i]]) return { ok: false, msg: "Needs " + TECH[t.req[i]].name + " first." };
+    if (co.cash - co.escrow < t.cost * 0.5) return { ok: false, msg: "Not enough cash to start that programme." };
+    co.research = { id: id, left: t.days, total: t.days };
+    return { ok: true };
+  },
+  borrow: function (G, amt) { return borrow(G, G.player, amt) ? { ok: true } : { ok: false, msg: "Above your credit line." }; },
+  repay: function (G, amt) { return repay(G, G.player, amt) ? { ok: true } : { ok: false, msg: "Nothing to repay." }; }
+};
+
+/* ---------- exports ---------- */
+E.newGame = newGame; E.tick = tick; E.act = act;
+E.placeOrder = placeOrder; E.cancelOrder = cancelOrder; E.matchBook = matchBook;
+E.invGet = invGet; E.avail = avail; E.invAdd = invAdd; E.storageCap = storageCap; E.storageUsed = storageUsed;
+E.haulCap = haulCap; E.haulUsed = haulUsed; E.price = price; E.book = book; E.bestBid = bestBid; E.bestAsk = bestAsk;
+E.freightCost = freightCost; E.freightRate = freightRate; E.transitDays = transitDays;
+E.valuation = valuation; E.assetValue = assetValue; E.creditLimit = creditLimit;
+E.unitCost = unitCost; E.estProfit = estProfit; E.marketShare = marketShare; E.marketView = marketView;
+E.startShipment = startShipment; E.takeJob = takeJob; E.postOffer = postOffer; E.acceptOffer = acceptOffer;
+E.updateBalance = updateBalance; E.newEntrant = newEntrant; E.movingAvg = movingAvg; E.movingVol = movingVol; E.varCost = varCost; E.GOALS = GOALS; E.logMsg = logMsg; E.sellBuilding = sellBuilding;
+E.playerStanding = playerStanding; E.buildingActive = buildingActive; E.levelThroughput = levelThroughput; E.CONSUMER_GOODS = CONSUMER_GOODS;
+E.addBuilding = addBuilding; E.canBuild = canBuild; E.regionLoad = regionLoad; E.borrow = borrow; E.repay = repay;
+})(ECON);
+
+if (typeof module !== "undefined" && module.exports) module.exports = ECON;
+
+
+/* ============================================================
+   MERIDIAN EXCHANGE - interface
+   ============================================================ */
+(function () {
+"use strict";
+var E = ECON, G = null, timer = null;
+
+var UI = {
+  screen: "start", tab: "dash", region: "HAL", cid: "steel",
+  speed: 0, pick: "extractor", name: "", err: "", toast: null, toastT: 0,
+  f: { oside: "buy", oqty: "", oprice: "", bType: "iron_mine", bRegion: "KAR",
+       sFrom: "KAR", sTo: "HAL", sCid: "iron_ore", sQty: "",
+       kSide: "sell", kCid: "steel", kRegion: "HAL", kQty: "100", kEvery: "7",
+       kCount: "4", kPrice: "", loan: "" }
+};
+var SPEEDS = [0, 1400, 700, 300];
+
+/* ---------- formatting ---------- */
+function money(v, dp) {
+  if (v === undefined || v === null || isNaN(v)) return "-";
+  var neg = v < 0; v = Math.abs(v);
+  var s;
+  if (dp) s = v.toFixed(dp);
+  else if (v >= 1000000) s = (v / 1000000).toFixed(2) + "m";
+  else if (v >= 10000) s = Math.round(v / 1000) + "k";
+  else s = Math.round(v).toLocaleString();
+  return (neg ? "-$" : "$") + s;
+}
+function m0(v) { return (v < 0 ? "-$" : "$") + Math.round(Math.abs(v)).toLocaleString(); }
+function px(v) { return "$" + (v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(2)); }
+function qty(v) { return Math.round(v).toLocaleString(); }
+function pc(v) { return (v > 0 ? "+" : "") + (v * 100).toFixed(1) + "%"; }
+function cls(v) { return v > 0 ? "up" : v < 0 ? "down" : "dim"; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+  return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+function co() { return G.player; }
+
+/* ---------- boot ---------- */
+function start() {
+  document.addEventListener("click", onClick);
+  document.addEventListener("input", onInput);
+  document.addEventListener("change", onInput);
+  document.addEventListener("keydown", onKey);
+  render();
+}
+function newGame(startId, name) {
+  G = E.newGame({ seed: Math.floor(Math.random() * 1e9), start: startId, company: name || "New Venture" });
+  UI.screen = "game"; UI.tab = "dash"; UI.speed = 1;
+  if (typeof window !== "undefined") window.__G = G;
+  var st = null; E.STARTS.forEach(function (s) { if (s.id === startId) st = s; });
+  if (st && st.grant.length) UI.region = st.grant[0][1];
+  setTimer();
+  render();
+}
+function setTimer() {
+  if (timer) clearInterval(timer);
+  timer = null;
+  if (UI.speed > 0) timer = setInterval(step, SPEEDS[UI.speed]);
+}
+function step() {
+  if (!G || G.over) { UI.speed = 0; setTimer(); render(); return; }
+  E.tick(G);
+  render();
+}
+function toast(msg) { UI.toast = msg; UI.toastT = Date.now(); }
+
+/* ---------- event plumbing ---------- */
+function onClick(ev) {
+  var el = ev.target.closest("[data-act]");
+  if (!el) return;
+  var a = el.getAttribute("data-act"), d = el.dataset;
+  UI.err = "";
+  switch (a) {
+    case "pick": UI.pick = d.id; break;
+    case "begin": newGame(UI.pick, (document.getElementById("coname") || {}).value || "New Venture"); return;
+    case "tab": UI.tab = d.id; break;
+    case "speed": UI.speed = +d.v; setTimer(); break;
+    case "step": step(); return;
+    case "region": UI.region = d.id; break;
+    case "cid": UI.cid = d.id; UI.f.oprice = E.price(G, UI.region, d.id).toFixed(2); break;
+    case "side": UI.f.oside = d.v; break;
+    case "order": doOrder(d.kind); break;
+    case "cancel": E.act.cancel(G, d.id); break;
+    case "build": doBuild(); break;
+    case "upgrade": say(E.act.upgrade(G, d.id)); break;
+    case "idle": E.act.toggleIdle(G, d.id); break;
+    case "standing": E.act.standing(G, d.id, d.w); break;
+    case "autohaul": E.act.autohaul(G); break;
+    case "sellsite": if (confirm("Sell this site?")) say(E.act.sell(G, d.id)); break;
+    case "ship": doShip(); break;
+    case "job": say(E.act.takeJob(G, d.id)); break;
+    case "offer": doOffer(); break;
+    case "accept": say(E.act.acceptOffer(G, d.id)); break;
+    case "research": say(E.act.research(G, d.id)); break;
+    case "borrow": say(E.act.borrow(G, +UI.f.loan || 0)); break;
+    case "repay": say(E.act.repay(G, +UI.f.loan || 0)); break;
+    case "restart": UI.screen = "start"; UI.speed = 0; setTimer(); break;
+    case "fill": UI.f.oprice = d.v; UI.f.oside = d.side; break;
+  }
+  render();
+}
+function onInput(ev) {
+  var el = ev.target;
+  if (!el.dataset || !el.dataset.f) return;
+  UI.f[el.dataset.f] = el.value;
+  if (el.dataset.live) render();
+}
+function onKey(ev) {
+  if (UI.screen !== "game" || ev.target.tagName === "INPUT" || ev.target.tagName === "SELECT") return;
+  if (ev.code === "Space") { ev.preventDefault(); UI.speed = UI.speed ? 0 : 1; setTimer(); render(); }
+  if (ev.key === "1" || ev.key === "2" || ev.key === "3") { UI.speed = +ev.key; setTimer(); render(); }
+}
+function say(r) { if (r && !r.ok && r.msg) UI.err = r.msg; else if (r && r.ok) toast("Done."); }
+
+function doOrder(kind) {
+  var p = kind === "market"
+    ? (UI.f.oside === "buy" ? (E.bestAsk(G, UI.region, UI.cid) || E.price(G, UI.region, UI.cid) * 1.2)
+                            : (E.bestBid(G, UI.region, UI.cid) || E.price(G, UI.region, UI.cid) * 0.8))
+    : parseFloat(UI.f.oprice);
+  var q = parseInt(UI.f.oqty, 10);
+  if (!(q > 0)) { UI.err = "Enter a quantity."; return; }
+  if (!(p > 0)) { UI.err = "Enter a price."; return; }
+  var o = E.act.order(G, UI.f.oside, UI.cid, UI.region, p, q);
+  if (!o) UI.err = UI.f.oside === "buy" ? "Not enough free cash for that order."
+                                        : "You do not hold that much here.";
+  else { UI.f.oqty = ""; toast((UI.f.oside === "buy" ? "Bid" : "Offer") + " posted."); }
+}
+function doBuild() {
+  var r = E.act.build(G, UI.f.bType, UI.f.bRegion);
+  if (!r.ok) UI.err = r.msg; else toast("Construction complete.");
+}
+function doShip() {
+  var q = parseInt(UI.f.sQty, 10);
+  if (!(q > 0)) { UI.err = "Enter a quantity."; return; }
+  var r = E.act.ship(G, UI.f.sFrom, UI.f.sTo, UI.f.sCid, q);
+  if (!r.ok) UI.err = r.msg || "Cannot dispatch."; else { UI.f.sQty = ""; toast("Load dispatched."); }
+}
+function doOffer() {
+  var q = parseInt(UI.f.kQty, 10), n = parseInt(UI.f.kCount, 10), iv = parseInt(UI.f.kEvery, 10);
+  var p = parseFloat(UI.f.kPrice);
+  if (!(q > 0 && n > 0 && iv > 0 && p > 0)) { UI.err = "Fill in every field."; return; }
+  if (!co().tech.futures_desk && n * iv > 60) { UI.err = "Without a futures desk you cannot write past 60 days."; return; }
+  E.act.offer(G, UI.f.kSide, UI.f.kCid, UI.f.kRegion, q, iv, n, p);
+  toast("Offer posted to the board.");
+}
+
+/* ---------- render ---------- */
+function render() {
+  var app = document.getElementById("app");
+  var focus = document.activeElement, fid = focus && focus.dataset ? focus.dataset.f : null;
+  var selStart = focus && focus.selectionStart;
+  app.innerHTML = UI.screen === "start" ? startScreen() : gameScreen();
+  if (fid) {
+    var back = app.querySelector('[data-f="' + fid + '"]');
+    if (back) { back.focus(); try { back.selectionStart = back.selectionEnd = selStart; } catch (e) {} }
+  }
+  drawCharts();
+}
+
+function startScreen() {
+  var paths = E.STARTS.map(function (s) {
+    return '<div class="path ' + (UI.pick === s.id ? "on" : "") + '" data-act="pick" data-id="' + s.id + '">' +
+      "<b>" + s.title + "</b><small>" + s.blurb + "</small>" +
+      '<span class="cap">' + m0(s.cash) + " opening capital" +
+      (s.grant.length ? " &middot; " + s.grant.length + " site" + (s.grant.length > 1 ? "s" : "") : " &middot; no plant") +
+      "</span></div>";
+  }).join("");
+  return '<div class="overlay"><div class="sheet">' +
+    "<h1>MERIDIAN EXCHANGE</h1>" +
+    '<p class="lede">Five regions, twelve commodities, one order book. Every price you see is made by ' +
+    "somebody buying or selling. Dig it up, refine it, build with it, or simply trade it - but nothing " +
+    "moves unless you move it.</p>" +
+    '<div class="form" style="max-width:320px;margin-bottom:18px"><label>Company name</label>' +
+    '<input id="coname" value="' + esc(UI.name || "Halloway & Sons") + '" maxlength="26"></div>' +
+    '<div class="paths">' + paths + "</div>" +
+    '<div style="margin-top:20px;display:flex;gap:10px;align-items:center">' +
+    '<button class="primary" data-act="begin">Open for business</button>' +
+    '<span class="faint">Space pauses. Keys 1-3 set the clock.</span></div>' +
+    "</div></div>";
+}
+
+function gameScreen() {
+  var c = co();
+  var tabs = [["dash", "Dashboard"], ["market", "Exchange"], ["ops", "Operations"], ["log", "Logistics"],
+              ["contracts", "Contracts"], ["research", "Research"], ["ledger", "Ledger"], ["intel", "Intel"]];
+  var head =
+    '<header><div class="brand">MERIDIAN<small>EXCHANGE</small></div>' +
+    stat("Day", G.day) +
+    stat("Company", esc(c.name)) +
+    stat("Cash", m0(c.cash - c.escrow) + (c.escrow > 1 ? '<span class="faint"> +' + money(c.escrow) + " held</span>" : "")) +
+    stat("Valuation", m0(c.valuation)) +
+    stat("Yesterday", spanCls(c.hist.length ? c.hist[c.hist.length - 1].p : 0)) +
+    '<div class="speed">' +
+      '<button class="' + (UI.speed === 0 ? "primary" : "") + '" data-act="speed" data-v="0">Pause</button>' +
+      '<button class="' + (UI.speed === 1 ? "primary" : "") + '" data-act="speed" data-v="1">1x</button>' +
+      '<button class="' + (UI.speed === 2 ? "primary" : "") + '" data-act="speed" data-v="2">2x</button>' +
+      '<button class="' + (UI.speed === 3 ? "primary" : "") + '" data-act="speed" data-v="3">4x</button>' +
+      '<button data-act="step">Day +1</button></div></header>';
+  var nav = "<nav>" + tabs.map(function (t) {
+    return '<button class="' + (UI.tab === t[0] ? "on" : "") + '" data-act="tab" data-id="' + t[0] + '">' + t[1] + "</button>";
+  }).join("") + "</nav>";
+  var body = "";
+  if (UI.tab === "dash") body = tabDash();
+  else if (UI.tab === "market") body = tabMarket();
+  else if (UI.tab === "ops") body = tabOps();
+  else if (UI.tab === "log") body = tabLogistics();
+  else if (UI.tab === "contracts") body = tabContracts();
+  else if (UI.tab === "research") body = tabResearch();
+  else if (UI.tab === "ledger") body = tabLedger();
+  else body = tabIntel();
+  var over = G.over ? overScreen() : "";
+  var tst = (UI.toast && Date.now() - UI.toastT < 2600) ? '<div class="toast">' + esc(UI.toast) + "</div>" : "";
+  return head + nav + "<main>" + (UI.err ? '<div class="err" style="margin-bottom:8px">' + esc(UI.err) + "</div>" : "") +
+    body + "</main>" + over + tst;
+}
+function stat(label, v) { return '<div class="stat"><b>' + v + "</b><span>" + label + "</span></div>"; }
+function spanCls(v) { return '<span class="' + cls(v) + '">' + m0(v) + "</span>"; }
+function card(title, body, extra) {
+  return '<div class="card"><h3>' + title + (extra ? "<span>" + extra + "</span>" : "") + "</h3>" +
+    '<div class="body">' + body + "</div></div>";
+}
+function cardRaw(title, body, extra) {
+  return '<div class="card"><h3>' + title + (extra ? "<span>" + extra + "</span>" : "") + "</h3>" + body + "</div>";
+}
+
+/* ---------- dashboard ---------- */
+function tabDash() {
+  var c = co();
+  var alerts = [];
+  c.buildings.forEach(function (b) {
+    var d = E.BUILD[b.type];
+    if (b.down > 0) alerts.push(["down", d.name + " in " + E.RMAP[b.rid].name + " is out of action for " + b.down + " more days."]);
+    else if (b.idle) alerts.push(["idle", d.name + " in " + E.RMAP[b.rid].name + " is mothballed."]);
+    for (var k in d.inp) {
+      var cover = E.invGet(c, b.rid, k) / (d.inp[k] * E.levelThroughput(b));
+      if (cover < 1.2) alerts.push(["short", d.name + " in " + E.RMAP[b.rid].name + " has " +
+        cover.toFixed(1) + " days of " + E.CMAP[k].name.toLowerCase() + " left."]);
+    }
+  });
+  E.REGIONS.forEach(function (r) {
+    var u = E.storageUsed(G, c, r.id), cap = E.storageCap(G, c, r.id);
+    if (cap > 0 && u > cap * 0.92) alerts.push(["store", "Yards in " + r.name + " are " + Math.round(u / cap * 100) + "% full."]);
+  });
+  G.contracts.forEach(function (k) {
+    if (k.seller !== c.id) return;
+    if (k.next - G.day <= 2 && E.avail(c, k.rid, k.cid) < k.qtyPer)
+      alerts.push(["contract", "Contract delivery of " + qty(k.qtyPer) + " " + E.CMAP[k.cid].name.toLowerCase() +
+        " in " + E.RMAP[k.rid].name + " due in " + Math.max(0, k.next - G.day) + " days; you are short."]);
+  });
+  var alertHtml = alerts.length
+    ? alerts.slice(0, 9).map(function (a) { return '<div class="kv"><span class="' +
+        (a[0] === "short" || a[0] === "contract" ? "down" : "dim") + '">' + esc(a[1]) + "</span></div>"; }).join("")
+    : '<div class="faint">Nothing needs you right now.</div>';
+
+  var sites = c.buildings.filter(function (b) { return E.BUILD[b.type].cls !== "support"; });
+  var siteRows = sites.slice(0, 10).map(function (b) {
+    var d = E.BUILD[b.type];
+    return "<tr><td>" + d.name + '</td><td class="dim">' + E.RMAP[b.rid].name + "</td>" +
+      '<td class="num">' + Math.round(b.util * 100) + "%</td>" +
+      '<td class="num ' + cls(E.estProfit(G, c, b.type, b.rid)) + '">' + m0(E.estProfit(G, c, b.type, b.rid)) + "</td></tr>";
+  }).join("") || '<tr><td colspan="4" class="faint">No production sites.</td></tr>';
+
+  var goals = E.GOALS.map(function (g) {
+    var done = c.goals && c.goals[g.id];
+    return '<div class="kv"><span class="' + (done ? "up" : "dim") + '">' + (done ? "[x] " : "[ ] ") + g.name + "</span>" +
+      (done ? '<b class="faint">day ' + done + "</b>" : "") + "</div>";
+  }).join("");
+
+  var pos = [];
+  E.COMM.forEach(function (cm) {
+    var t = 0, v = 0;
+    E.REGIONS.forEach(function (r) { var q = E.invGet(c, r.id, cm.id); t += q; v += q * E.price(G, r.id, cm.id); });
+    if (t > 0.5) pos.push([cm, t, v]);
+  });
+  pos.sort(function (a, b) { return b[2] - a[2]; });
+  var posHtml = pos.length ? pos.slice(0, 8).map(function (p) {
+    return '<div class="kv"><span>' + p[0].name + "</span><b>" + qty(p[1]) + " " + p[0].unit +
+      ' <span class="faint">' + money(p[2]) + "</span></b></div>"; }).join("")
+    : '<div class="faint">No stock on hand.</div>';
+
+  return '<div class="grid g21">' +
+    '<div class="grid">' +
+      cardRaw("Company", '<div class="body grid g3">' +
+        '<div><div class="faint">Free cash</div><div class="big">' + money(co().cash - co().escrow) + "</div></div>" +
+        '<div><div class="faint">Valuation</div><div class="big">' + money(c.valuation) + "</div></div>" +
+        '<div><div class="faint">Debt</div><div class="big ' + (c.debt > 0 ? "rust" : "") + '">' + money(c.debt) + "</div></div>" +
+        "</div>" +
+        '<div class="body" style="padding-top:0"><canvas id="cv-net" height="120"></canvas>' +
+        '<div class="tick">Valuation, last 90 days</div></div>') +
+      cardRaw("Your sites", '<div class="scroll"><table><thead><tr><th>Site</th><th>Region</th>' +
+        '<th class="num">Running</th><th class="num">Margin/day</th></tr></thead><tbody>' + siteRows +
+        "</tbody></table></div>") +
+      card("Attention", alertHtml) +
+      (G.day < 25 ? card("Getting started",
+        '<div class="dim" style="font-size:11px;line-height:1.65">' +
+        "Each site carries standing orders: it restocks its inputs and sells its output at the going rate. " +
+        "That keeps you alive, not rich. The money is in the Exchange - bid under the market when a glut " +
+        "builds, sell into a shortage, and watch the Intel screen for what the world is running short of. " +
+        "Turn standing orders off in Operations when you want to work the book yourself." +
+        "</div>") : "") +
+    "</div>" +
+    '<div class="grid">' +
+      card("Stock on hand", posHtml) +
+      card("Objectives", goals) +
+      cardRaw("Wire", '<div class="body log scroll">' + G.log.slice(0, 22).map(function (l) {
+        return '<div><span class="d">' + l.d + '</span><span class="' + l.k + '">' + esc(l.t) + "</span></div>";
+      }).join("") + "</div>") +
+    "</div></div>";
+}
+
+/* ---------- exchange ---------- */
+function tabMarket() {
+  var c = co();
+  var regionChips = E.REGIONS.map(function (r) {
+    return '<span class="chip ' + (UI.region === r.id ? "on" : "") + '" data-act="region" data-id="' + r.id + '">' +
+      r.name + "</span>"; }).join("");
+  var rows = E.COMM.map(function (cm) {
+    var bk = E.book(G, UI.region, cm.id);
+    var h = bk.hist, prev = h.length > 8 ? h[h.length - 8].p : bk.ema;
+    var chg = prev > 0 ? bk.ema / prev - 1 : 0;
+    var mine = E.invGet(c, UI.region, cm.id);
+    return '<tr class="click ' + (UI.cid === cm.id ? "sel" : "") + '" data-act="cid" data-id="' + cm.id + '">' +
+      "<td>" + cm.name + '</td><td class="num">' + px(bk.ema) + "</td>" +
+      '<td class="num ' + cls(chg) + '">' + pc(chg) + "</td>" +
+      '<td class="num ' + (mine > 0 ? "" : "faint") + '">' + (mine > 0 ? qty(mine) : "-") + "</td>" +
+      '<td class="num faint">' + qty(bk.vol) + "</td></tr>";
+  }).join("");
+  var mv = E.marketView(G, c, UI.region, UI.cid);
+  var maxQ = 1;
+  mv.bids.concat(mv.asks).forEach(function (l) { if (l.qty > maxQ) maxQ = l.qty; });
+  var depth = "";
+  for (var i = 0; i < Math.max(mv.bids.length, mv.asks.length); i++) {
+    var b = mv.bids[i], a = mv.asks[i];
+    depth += '<div class="b" style="--w:' + (b ? b.qty / maxQ * 100 : 0) + '%">' +
+      (b ? '<span class="up" data-act="fill" data-side="sell" data-v="' + b.price + '">' + px(b.price) + "</span><span>" +
+        qty(b.qty) + (b.mine ? ' <span class="amber">*</span>' : "") + "</span>" : "<span></span><span></span>") + "</div>";
+    depth += '<div class="a" style="--w:' + (a ? a.qty / maxQ * 100 : 0) + '%">' +
+      (a ? '<span class="down" data-act="fill" data-side="buy" data-v="' + a.price + '">' + px(a.price) + "</span><span>" +
+        qty(a.qty) + (a.mine ? ' <span class="amber">*</span>' : "") + "</span>" : "<span></span><span></span>") + "</div>";
+  }
+  if (!depth) depth = '<div class="faint" style="grid-column:1/3;padding:6px">The book is empty.</div>';
+
+  var trades = mv.trades.slice().reverse().map(function (t) {
+    return '<div class="kv"><span class="faint">day ' + t.d + "</span><b>" + px(t.p) +
+      ' <span class="dim">x' + qty(t.q) + "</span></b></div>"; }).join("") ||
+    '<div class="faint">No recent business.</div>';
+
+  var myOrders = c.orders.filter(function (o) { return true; }).map(function (o) {
+    return "<tr><td>" + (o.side === "buy" ? '<span class="up">Bid</span>' : '<span class="down">Offer</span>') + "</td>" +
+      "<td>" + E.CMAP[o.cid].name + '</td><td class="dim">' + o.rid + "</td>" +
+      '<td class="num">' + px(o.price) + '</td><td class="num">' + qty(o.qty) + "</td>" +
+      '<td class="num faint">' + o.ttl + "d" + (o.auto ? ' <span class="pill">auto</span>' : "") + "</td>" +
+      '<td><button data-act="cancel" data-id="' + o.id + '">Pull</button></td></tr>';
+  }).join("") || '<tr><td colspan="7" class="faint">No live orders.</td></tr>';
+
+  var cm2 = E.CMAP[UI.cid];
+  var stock = E.invGet(c, UI.region, UI.cid);
+  var bal = G.balance[UI.cid] || { made: 0, used: 0 };
+  var full = !!c.tech.market_terminal;
+  var supply = full ? qty(mv.supply) : "~" + qty(mv.supply);
+  var demand = full ? qty(mv.demand) : "~" + qty(mv.demand);
+
+  return '<div style="margin-bottom:10px">' + regionChips + "</div>" +
+    '<div class="grid g12">' +
+      cardRaw(E.RMAP[UI.region].name + " prices",
+        '<div class="scroll"><table><thead><tr><th>Commodity</th><th class="num">Price</th>' +
+        '<th class="num">7d</th><th class="num">Yours</th><th class="num">Vol</th></tr></thead><tbody>' +
+        rows + "</tbody></table></div>") +
+      '<div class="grid">' +
+        cardRaw(cm2.name + " &middot; " + E.RMAP[UI.region].name,
+          '<div class="body"><canvas id="cv-price" height="150"></canvas>' +
+          '<div class="tick">Settlement price, last 120 days. Reference ' + px(cm2.p0) + " per " + cm2.unit + ".</div></div>",
+          px(E.price(G, UI.region, UI.cid))) +
+        '<div class="grid g2">' +
+          cardRaw("Order book", '<div class="depth" style="padding:6px">' + depth + "</div>",
+            "bids / offers") +
+          card("Ticket",
+            '<div class="row" style="margin-bottom:7px">' +
+              '<button class="' + (UI.f.oside === "buy" ? "primary" : "") + '" data-act="side" data-v="buy">Buy</button>' +
+              '<button class="' + (UI.f.oside === "sell" ? "primary" : "") + '" data-act="side" data-v="sell">Sell</button>' +
+            "</div>" +
+            '<div class="form">' +
+              '<div class="row"><div><label>Quantity</label><input data-f="oqty" value="' + esc(UI.f.oqty) + '" placeholder="0"></div>' +
+              '<div><label>Limit price</label><input data-f="oprice" value="' + esc(UI.f.oprice) + '" placeholder="' +
+                E.price(G, UI.region, UI.cid).toFixed(2) + '"></div></div>' +
+              '<div class="row"><button data-act="order" data-kind="limit">Post limit</button>' +
+              '<button data-act="order" data-kind="market">Take the market</button></div>' +
+            "</div>" +
+            '<div class="tick">You hold ' + qty(stock) + " " + cm2.unit + " here. Free cash " + money(c.cash - c.escrow) +
+            ". Exchange fee 0.35%.</div>") +
+        "</div>" +
+        '<div class="grid g2">' +
+          card("Recent trades", trades) +
+          card("Balance", '<div class="kv"><span>Offered here</span><b>' + supply + "</b></div>" +
+            '<div class="kv"><span>Wanted here</span><b>' + demand + "</b></div>" +
+            '<div class="kv"><span>World output</span><b>' + (full ? qty(bal.made) : "~" + qty(bal.made)) + "/day</b></div>" +
+            '<div class="kv"><span>World consumption</span><b>' + (full ? qty(bal.used) : "~" + qty(bal.used)) + "/day</b></div>" +
+            (full ? "" : '<div class="tick">Figures are trade gossip. A market terminal would give you the real book.</div>')) +
+        "</div>" +
+        cardRaw("Your orders", '<div class="scroll"><table><thead><tr><th>Side</th><th>Commodity</th><th>Where</th>' +
+          '<th class="num">Price</th><th class="num">Qty</th><th class="num">Expires</th><th></th></tr></thead><tbody>' +
+          myOrders + "</tbody></table></div>") +
+      "</div></div>";
+}
+
+/* ---------- operations ---------- */
+function tabOps() {
+  var c = co();
+  var rows = c.buildings.map(function (b) {
+    var d = E.BUILD[b.type], sup = d.cls === "support";
+    var status = b.down > 0 ? '<span class="pill off">down ' + b.down + "d</span>"
+      : b.idle ? '<span class="pill warn">idle</span>' : '<span class="pill on">running</span>';
+    var out = Object.keys(d.out).map(function (k) {
+      return qty(d.out[k] * E.levelThroughput(b)) + " " + E.CMAP[k].name.toLowerCase(); }).join(", ") ||
+      (d.storage ? qty(d.storage) + " storage" : qty(d.haul) + " haulage");
+    var upCost = d.cap * 0.7 * b.level;
+    var standing = sup ? "" :
+      '<span class="chip ' + (b.autoBuy ? "on" : "") + '" data-act="standing" data-id="' + b.id + '" data-w="buy">restock</span>' +
+      '<span class="chip ' + (b.autoSell ? "on" : "") + '" data-act="standing" data-id="' + b.id + '" data-w="sell">sell output</span>';
+    return "<tr><td>" + d.name + (b.level > 1 ? ' <span class="amber">L' + b.level + "</span>" : "") + "</td>" +
+      '<td class="dim">' + E.RMAP[b.rid].name + "</td><td>" + status + "</td>" +
+      '<td class="num">' + Math.round(b.util * 100) + "%</td>" +
+      '<td class="dim">' + out + "</td>" +
+      "<td>" + standing + "</td>" +
+      '<td class="num ' + (sup ? "faint" : cls(E.estProfit(G, c, b.type, b.rid))) + '">' +
+        (sup ? "-" : m0(E.estProfit(G, c, b.type, b.rid))) + "</td>" +
+      "<td>" + (b.level < 4 ? '<button data-act="upgrade" data-id="' + b.id + '">Expand ' + money(upCost) + "</button>" : "") +
+      ' <button data-act="idle" data-id="' + b.id + '">' + (b.idle ? "Restart" : "Mothball") + "</button>" +
+      ' <button data-act="sellsite" data-id="' + b.id + '">Sell</button></td></tr>';
+  }).join("") || '<tr><td colspan="8" class="faint">You own no sites.</td></tr>';
+
+  var types = Object.keys(E.BUILD).map(function (t) {
+    return '<option value="' + t + '" ' + (UI.f.bType === t ? "selected" : "") + ">" + E.BUILD[t].name +
+      " &middot; " + money(E.BUILD[t].cap) + "</option>"; }).join("");
+  var regions = E.REGIONS.map(function (r) {
+    return '<option value="' + r.id + '" ' + (UI.f.bRegion === r.id ? "selected" : "") + ">" + r.name + "</option>"; }).join("");
+  var d = E.BUILD[UI.f.bType], rid = UI.f.bRegion;
+  var profit = E.estProfit(G, c, UI.f.bType, rid);
+  var payback = profit > 0 ? Math.round(d.cap / profit) : null;
+  var recipe = Object.keys(d.inp).map(function (k) { return qty(d.inp[k]) + " " + E.CMAP[k].name.toLowerCase(); }).join(" + ");
+  var makes = Object.keys(d.out).map(function (k) { return qty(d.out[k]) + " " + E.CMAP[k].name.toLowerCase(); }).join(" + ");
+  var dep = d.dep ? qty(G.regionState[rid].deposits[d.dep] || 0) + " " + E.CMAP[d.dep].name.toLowerCase() + " left in the ground" : "";
+
+  var yards = E.REGIONS.map(function (r) {
+    var u = E.storageUsed(G, c, r.id), cap = E.storageCap(G, c, r.id);
+    return '<div class="kv"><span>' + r.name + "</span><b>" + Math.round(u) + " / " + Math.round(cap) +
+      '</b></div><div class="bar"><i style="width:' + Math.min(100, u / Math.max(1, cap) * 100) + '%"></i></div>';
+  }).join("");
+
+  return '<div class="grid g21">' +
+    cardRaw("Sites", '<div class="scroll" style="max-height:520px"><table><thead><tr><th>Site</th><th>Region</th>' +
+      '<th>Status</th><th class="num">Running</th><th>Daily output</th><th>Standing orders</th>' +
+      '<th class="num">Margin/day</th><th></th></tr></thead><tbody>' + rows + "</tbody></table></div>") +
+    '<div class="grid">' +
+      card("Build", '<div class="form">' +
+        "<div><label>What</label><select data-f=\"bType\" data-live=\"1\">" + types + "</select></div>" +
+        "<div><label>Where</label><select data-f=\"bRegion\" data-live=\"1\">" + regions + "</select></div>" +
+        '<button class="primary" data-act="build">Build for ' + m0(d.cap) + "</button></div>" +
+        '<div class="tick">' + (recipe ? "Consumes " + recipe + " a day. " : "") +
+        (makes ? "Produces " + makes + ". " : "") +
+        "Needs " + qty(d.labor) + " labour-hours and " + qty(d.energy) + " units of power.<br>" +
+        (dep ? dep + "<br>" : "") +
+        "At today's prices in " + E.RMAP[rid].name + ": " +
+        (d.cls === "support" ? "support asset, no direct margin." :
+          '<span class="' + cls(profit) + '">' + m0(profit) + " a day" + (payback ? ", paying back in " + payback + " days" : "") + ".</span>") +
+        "</div>") +
+      card("Yards", yards) +
+      card("Labour and power", E.REGIONS.map(function (r) {
+        var rs = G.regionState[r.id];
+        return '<div class="kv"><span>' + r.name + "</span><b>" + px(rs.wage) + "/hr &middot; " +
+          px(rs.eprice) + "/unit" + (rs.eScale < 1 ? ' <span class="down">brownout</span>' : "") + "</b></div>";
+      }).join("")) +
+    "</div></div>";
+}
+
+/* ---------- logistics ---------- */
+function tabLogistics() {
+  var c = co();
+  var regions = E.REGIONS.map(function (r) { return { id: r.id, name: r.name }; });
+  function opts(sel, f) {
+    return regions.map(function (r) {
+      return '<option value="' + r.id + '" ' + (UI.f[f] === r.id ? "selected" : "") + ">" + r.name + "</option>"; }).join("");
+  }
+  var comms = E.COMM.map(function (cm) {
+    return '<option value="' + cm.id + '" ' + (UI.f.sCid === cm.id ? "selected" : "") + ">" + cm.name + "</option>"; }).join("");
+  var q = parseInt(UI.f.sQty, 10) || 0;
+  var cost = q > 0 ? E.freightCost(G, c, UI.f.sFrom, UI.f.sTo, UI.f.sCid, q) : 0;
+  var self = E.haulCap(G, c) - E.haulUsed(G, c) >= q * E.CMAP[UI.f.sCid].w;
+  var days = E.transitDays(UI.f.sFrom, UI.f.sTo);
+  var have = E.avail(c, UI.f.sFrom, UI.f.sCid);
+
+  var transit = G.shipments.filter(function (s) { return s.co === c.id || s.payTo === c.id; }).map(function (s) {
+    var own = s.co === c.id;
+    return "<tr><td>" + (own ? E.CMAP[s.cid].name : '<span class="amber">carrying</span> ' + E.CMAP[s.cid].name) + "</td>" +
+      '<td class="num">' + qty(s.qty) + '</td><td class="dim">' + s.from + " to " + s.to + "</td>" +
+      '<td class="num">' + Math.max(0, s.arrive - G.day) + "d</td>" +
+      '<td class="num">' + (own ? m0(-s.cost) : '<span class="up">' + m0(s.pay || 0) + "</span>") + "</td></tr>";
+  }).join("") || '<tr><td colspan="5" class="faint">Nothing on the road.</td></tr>';
+
+  var capFree = E.haulCap(G, c) - E.haulUsed(G, c);
+  var jobs = G.jobs.filter(function (j) { return !j.taken; }).slice(0, 14).map(function (j) {
+    return "<tr><td>" + E.CMAP[j.cid].name + '</td><td class="num">' + qty(j.qty) + "</td>" +
+      '<td class="dim">' + j.from + " to " + j.to + '</td><td class="num">' + Math.round(j.load) + "</td>" +
+      '<td class="num up">' + m0(j.pay * (c.tech.fleet_scale ? 1.15 : 1)) + "</td>" +
+      '<td><button data-act="job" data-id="' + j.id + '" ' + (capFree < j.load ? "disabled" : "") + ">Take</button></td></tr>";
+  }).join("") || '<tr><td colspan="6" class="faint">No loads on offer today.</td></tr>';
+
+  return '<div class="grid g21">' +
+    '<div class="grid">' +
+      cardRaw("The map", '<div class="body"><canvas id="cv-map" height="330"></canvas>' +
+        '<div class="tick">Road distances in kilometres. Your sites are marked in amber.</div></div>') +
+      cardRaw("On the road", '<div class="scroll"><table><thead><tr><th>Cargo</th><th class="num">Qty</th>' +
+        '<th>Route</th><th class="num">Arrives</th><th class="num">Cost</th></tr></thead><tbody>' + transit +
+        "</tbody></table></div>") +
+    "</div>" +
+    '<div class="grid">' +
+      card("Dispatch a load", '<div class="form">' +
+        '<div class="row"><div><label>From</label><select data-f="sFrom" data-live="1">' + opts(0, "sFrom") + "</select></div>" +
+        '<div><label>To</label><select data-f="sTo" data-live="1">' + opts(0, "sTo") + "</select></div></div>" +
+        '<div><label>Cargo</label><select data-f="sCid" data-live="1">' + comms + "</select></div>" +
+        '<div><label>Quantity</label><input data-f="sQty" data-live="1" value="' + esc(UI.f.sQty) + '" placeholder="0"></div>' +
+        '<button class="primary" data-act="ship">Dispatch</button></div>' +
+        '<div class="tick">You hold ' + qty(have) + " there. " +
+        (q > 0 ? "Freight " + m0(cost) + " (" + px(cost / q) + " a unit), " + days + " day" + (days > 1 ? "s" : "") + " on the road. " +
+          (self ? "Your own fleet carries it at 45% off." : "A carrier takes the job.") : "Enter a quantity for a quote.") +
+        "</div>") +
+      card("Fleet", '<div class="kv"><span>Haulage capacity</span><b>' + qty(E.haulCap(G, c)) + "</b></div>" +
+        '<div class="kv"><span>In use</span><b>' + qty(E.haulUsed(G, c)) + "</b></div>" +
+        '<div class="bar"><i style="width:' + Math.min(100, E.haulUsed(G, c) / Math.max(1, E.haulCap(G, c)) * 100) + '%"></i></div>' +
+        '<div class="bar"><i style="width:' + Math.min(100, E.haulUsed(G, c) / Math.max(1, E.haulCap(G, c)) * 100) + '%"></i></div>'.slice(0,0) +
+        '<div class="kv"><span>Traffic office</span><span class="chip ' + (c.autoHaul === false ? "" : "on") +
+        '" data-act="autohaul">' + (c.autoHaul === false ? "off" : "takes spare loads") + '</span></div>' +
+        '<div class="tick">Each truck depot carries 600 load units. Heavy ores take more room than machines. ' +
+        'With the traffic office on, idle trucks pick up loads from the board on their own.</div>') +
+      cardRaw("Freight board", '<div class="scroll"><table><thead><tr><th>Cargo</th><th class="num">Qty</th><th>Route</th>' +
+        '<th class="num">Load</th><th class="num">Pays</th><th></th></tr></thead><tbody>' + jobs + "</tbody></table></div>") +
+    "</div></div>";
+}
+
+/* ---------- contracts ---------- */
+function tabContracts() {
+  var c = co();
+  var mine = G.contracts.filter(function (k) { return k.seller === c.id || k.buyer === c.id; }).map(function (k) {
+    var selling = k.seller === c.id;
+    var other = G.co[selling ? k.buyer : k.seller];
+    var short = selling && E.avail(c, k.rid, k.cid) < k.qtyPer;
+    return "<tr><td>" + (selling ? '<span class="down">Supply</span>' : '<span class="up">Take</span>') + "</td>" +
+      "<td>" + E.CMAP[k.cid].name + '</td><td class="num">' + qty(k.qtyPer) + "</td>" +
+      '<td class="num">' + px(k.price) + '</td><td class="dim">' + E.RMAP[k.rid].name + "</td>" +
+      "<td>" + esc(other ? other.name : "-") + '</td><td class="num">' + k.left + "</td>" +
+      '<td class="num">' + Math.max(0, k.next - G.day) + "d" + (short ? ' <span class="down">short</span>' : "") + "</td></tr>";
+  }).join("") || '<tr><td colspan="8" class="faint">No contracts running.</td></tr>';
+
+  var open = G.offers.filter(function (o) { return o.from !== c.id; }).map(function (o) {
+    var from = G.co[o.from];
+    var fair = E.price(G, o.rid, o.cid);
+    var edge = o.side === "sell" ? (fair - o.price) / fair : (o.price - fair) / fair;
+    return "<tr><td>" + esc(from ? from.name : "-") + "</td>" +
+      "<td>" + (o.side === "sell" ? "offers" : "wants") + " " + E.CMAP[o.cid].name + "</td>" +
+      '<td class="num">' + qty(o.qtyPer) + " x" + o.deliveries + "</td>" +
+      '<td class="num">' + px(o.price) + '</td><td class="num ' + cls(edge) + '">' + pc(edge) + "</td>" +
+      '<td class="dim">' + E.RMAP[o.rid].name + " &middot; every " + o.interval + "d</td>" +
+      '<td><button data-act="accept" data-id="' + o.id + '">Sign</button></td></tr>';
+  }).join("") || '<tr><td colspan="7" class="faint">Nobody is offering terms today.</td></tr>';
+
+  var mineOffers = G.offers.filter(function (o) { return o.from === c.id; }).map(function (o) {
+    return "<tr><td>" + (o.side === "sell" ? "Supplying" : "Buying") + " " + E.CMAP[o.cid].name + "</td>" +
+      '<td class="num">' + qty(o.qtyPer) + " x" + o.deliveries + '</td><td class="num">' + px(o.price) + "</td>" +
+      '<td class="dim">' + E.RMAP[o.rid].name + '</td><td class="faint">expires in ' + o.ttl + "d</td></tr>";
+  }).join("") || '<tr><td colspan="5" class="faint">You have nothing on the board.</td></tr>';
+
+  var comms = E.COMM.map(function (cm) {
+    return '<option value="' + cm.id + '" ' + (UI.f.kCid === cm.id ? "selected" : "") + ">" + cm.name + "</option>"; }).join("");
+  var regs = E.REGIONS.map(function (r) {
+    return '<option value="' + r.id + '" ' + (UI.f.kRegion === r.id ? "selected" : "") + ">" + r.name + "</option>"; }).join("");
+  var total = (parseInt(UI.f.kQty, 10) || 0) * (parseInt(UI.f.kCount, 10) || 0) * (parseFloat(UI.f.kPrice) || 0);
+  var span = (parseInt(UI.f.kCount, 10) || 0) * (parseInt(UI.f.kEvery, 10) || 0);
+
+  return '<div class="grid g21">' +
+    '<div class="grid">' +
+      cardRaw("Your contracts", '<div class="scroll"><table><thead><tr><th>Side</th><th>Commodity</th>' +
+        '<th class="num">Per run</th><th class="num">Price</th><th>Where</th><th>Counterparty</th>' +
+        '<th class="num">Left</th><th class="num">Next</th></tr></thead><tbody>' + mine + "</tbody></table></div>") +
+      cardRaw("Open terms", '<div class="scroll"><table><thead><tr><th>Firm</th><th>Terms</th>' +
+        '<th class="num">Volume</th><th class="num">Price</th><th class="num">vs market</th><th>Detail</th>' +
+        "<th></th></tr></thead><tbody>" + open + "</tbody></table></div>") +
+      cardRaw("Posted by you", '<div class="scroll"><table><tbody>' + mineOffers + "</tbody></table></div>") +
+    "</div>" +
+    '<div class="grid">' +
+      card("Write a contract", '<div class="form">' +
+        '<div><label>Direction</label><select data-f="kSide" data-live="1">' +
+          '<option value="sell" ' + (UI.f.kSide === "sell" ? "selected" : "") + ">I supply</option>" +
+          '<option value="buy" ' + (UI.f.kSide === "buy" ? "selected" : "") + ">I buy</option></select></div>" +
+        '<div><label>Commodity</label><select data-f="kCid" data-live="1">' + comms + "</select></div>" +
+        '<div><label>Delivered at</label><select data-f="kRegion" data-live="1">' + regs + "</select></div>" +
+        '<div class="row"><div><label>Units per run</label><input data-f="kQty" data-live="1" value="' + esc(UI.f.kQty) + '"></div>' +
+        '<div><label>Every (days)</label><input data-f="kEvery" data-live="1" value="' + esc(UI.f.kEvery) + '"></div></div>' +
+        '<div class="row"><div><label>Runs</label><input data-f="kCount" data-live="1" value="' + esc(UI.f.kCount) + '"></div>' +
+        '<div><label>Price per unit</label><input data-f="kPrice" data-live="1" value="' + esc(UI.f.kPrice) + '" placeholder="' +
+          E.price(G, UI.f.kRegion, UI.f.kCid).toFixed(2) + '"></div></div>' +
+        '<button class="primary" data-act="offer">Post to the board</button></div>' +
+        '<div class="tick">Market price today ' + px(E.price(G, UI.f.kRegion, UI.f.kCid)) + ". " +
+        "Total " + m0(total) + " over " + span + " days. Miss a delivery and you pay a quarter of its value " +
+        "and lose standing." + (co().tech.futures_desk ? " Your futures desk allows terms up to 180 days." :
+        " Without a futures desk you are limited to 60 days.") + "</div>") +
+      card("Standing", '<div class="kv"><span>Reputation</span><b>' + (c.rep * 100).toFixed(0) + "/100</b></div>" +
+        '<div class="bar"><i style="width:' + Math.min(100, c.rep * 83) + '%"></i></div>' +
+        '<div class="tick">Reliable delivery earns better terms and cheaper credit. Defaults cost both.</div>') +
+    "</div></div>";
+}
+
+/* ---------- research ---------- */
+function tabResearch() {
+  var c = co();
+  var cur = c.research
+    ? '<div class="kv"><span>' + E.TECH[c.research.id].name + "</span><b>" + c.research.left + " days left</b></div>" +
+      '<div class="bar"><i style="width:' + ((1 - c.research.left / c.research.total) * 100) + '%"></i></div>' +
+      '<div class="tick">Costs ' + m0(E.TECH[c.research.id].cost / c.research.total) + " a day while it runs.</div>"
+    : '<div class="faint">No programme running.</div>';
+  var cards = Object.keys(E.TECH).map(function (id) {
+    var t = E.TECH[id], have = !!c.tech[id];
+    var blocked = t.req.filter(function (r) { return !c.tech[r]; });
+    return '<div class="card"><h3>' + t.name + "<span>" + (have ? '<span class="pill on">held</span>' : money(t.cost)) + "</span></h3>" +
+      '<div class="body"><div class="dim" style="min-height:42px">' + t.desc + "</div>" +
+      '<div class="tick">' + (blocked.length ? "Requires " + blocked.map(function (r) { return E.TECH[r].name; }).join(", ") :
+        t.days + " days of work") + "</div>" +
+      (have ? "" : '<button data-act="research" data-id="' + id + '" ' +
+        (c.research || blocked.length ? "disabled" : "") + ">Begin</button>") + "</div></div>";
+  }).join("");
+  return card("Programme", cur) + '<div class="grid g3" style="margin-top:12px">' + cards + "</div>";
+}
+
+/* ---------- ledger ---------- */
+function tabLedger() {
+  var c = co();
+  function sum(days) {
+    var t = {}, h = c.hist.slice(-days);
+    h.forEach(function (row) { for (var k in row.l) t[k] = (t[k] || 0) + row.l[k]; });
+    t.profit = h.reduce(function (a, r) { return a + r.p; }, 0);
+    return t;
+  }
+  var a = sum(1), b = sum(30);
+  function line(label, key, neg) {
+    var va = (a[key] || 0) * (neg ? -1 : 1), vb = (b[key] || 0) * (neg ? -1 : 1);
+    return "<tr><td>" + label + '</td><td class="num ' + (neg ? "down" : "") + '">' + m0(va) +
+      '</td><td class="num ' + (neg ? "down" : "") + '">' + m0(vb) + "</td></tr>";
+  }
+  var inv = 0;
+  E.REGIONS.forEach(function (r) {
+    var iv = c.inv[r.id] || {};
+    for (var k in iv) inv += iv[k] * E.price(G, r.id, k);
+  });
+  var plant = E.assetValue(G, c) - inv * 0.9;
+  var limit = E.creditLimit(G, c);
+
+  return '<div class="grid g21">' +
+    '<div class="grid">' +
+      cardRaw("Trading account", "<table><thead><tr><th>Item</th><th class=\"num\">Yesterday</th>" +
+        '<th class="num">Last 30 days</th></tr></thead><tbody>' +
+        line("Sales", "rev") + line("Materials bought", "cogs", 1) + line("Wages", "wages", 1) +
+        line("Power", "energy", 1) + line("Maintenance", "maint", 1) + line("Freight", "freight", 1) +
+        line("Storage", "storage", 1) + line("Exchange fees", "fees", 1) + line("Research", "research", 1) +
+        line("Interest", "interest", 1) + line("Penalties", "penalty", 1) + line("Tax", "tax", 1) +
+        '<tr><td><b>Profit</b></td><td class="num ' + cls(a.profit) + '"><b>' + m0(a.profit || 0) + "</b></td>" +
+        '<td class="num ' + cls(b.profit) + '"><b>' + m0(b.profit || 0) + "</b></td></tr>" +
+        '<tr><td class="faint">Capital spending</td><td class="num faint">' + m0(-(a.capex || 0)) + "</td>" +
+        '<td class="num faint">' + m0(-(b.capex || 0)) + "</td></tr>" +
+        "</tbody></table>") +
+      cardRaw("Cash", '<div class="body"><canvas id="cv-cash" height="130"></canvas>' +
+        '<div class="tick">Cash balance, last 90 days. A company can be profitable and still run out.</div></div>') +
+    "</div>" +
+    '<div class="grid">' +
+      card("Balance sheet",
+        '<div class="kv"><span>Cash</span><b>' + m0(c.cash) + "</b></div>" +
+        '<div class="kv"><span>Committed to open bids</span><b>' + m0(-c.escrow) + "</b></div>" +
+        '<div class="kv"><span>Stock at market</span><b>' + m0(inv) + "</b></div>" +
+        '<div class="kv"><span>Plant and equipment</span><b>' + m0(plant) + "</b></div>" +
+        '<div class="kv"><span>Debt</span><b class="rust">' + m0(-c.debt) + "</b></div>" +
+        '<div class="kv"><span>Company valuation</span><b class="amber">' + m0(c.valuation) + "</b></div>" +
+        '<div class="kv"><span>Cumulative profit</span><b class="' + cls(c.cum.profit) + '">' + m0(c.cum.profit) + "</b></div>") +
+      card("Credit",
+        '<div class="kv"><span>Outstanding</span><b>' + m0(c.debt) + "</b></div>" +
+        '<div class="kv"><span>Still available</span><b>' + m0(limit) + "</b></div>" +
+        '<div class="kv"><span>Rate</span><b>' + ((E.BASE_INTEREST + (1.1 - c.rep) * 0.05) * 100).toFixed(1) + "% a year</b></div>" +
+        '<div class="form" style="margin-top:8px"><input data-f="loan" value="' + esc(UI.f.loan) + '" placeholder="Amount">' +
+        '<div class="row"><button data-act="borrow">Draw</button><button data-act="repay">Repay</button></div></div>') +
+    "</div></div>";
+}
+
+/* ---------- intel ---------- */
+function tabIntel() {
+  var c = co();
+  var full = !!c.tech.market_terminal;
+  var head = "<tr><th>Commodity</th>" + E.REGIONS.map(function (r) {
+    return '<th class="num">' + r.id + "</th>"; }).join("") +
+    '<th class="num">Made</th><th class="num">Used</th><th class="num">Yours</th></tr>';
+  var rows = E.COMM.map(function (cm) {
+    var bal = G.balance[cm.id] || { made: 0, used: 0 };
+    var mine = 0; E.REGIONS.forEach(function (r) { mine += E.invGet(c, r.id, cm.id); });
+    return "<tr><td>" + cm.name + "</td>" + E.REGIONS.map(function (r) {
+      var p = E.price(G, r.id, cm.id);
+      var rel = p / cm.p0 - 1;
+      return '<td class="num ' + (rel > 0.12 ? "up" : rel < -0.12 ? "down" : "") + '">' + px(p) + "</td>";
+    }).join("") +
+      '<td class="num faint">' + (full ? qty(bal.made) : "~" + qty(Math.round(bal.made / 5) * 5)) + "</td>" +
+      '<td class="num faint">' + (full ? qty(bal.used) : "~" + qty(Math.round(bal.used / 5) * 5)) + "</td>" +
+      '<td class="num">' + (mine > 0.5 ? qty(mine) : "-") + "</td></tr>";
+  }).join("");
+
+  var share = E.marketShare(G, c);
+  var rivals = G.companies.filter(function (x) { return !x.isPlayer && !x.bankrupt; })
+    .sort(function (x, y) { return y.valuation - x.valuation; }).map(function (x) {
+      var v = full ? m0(x.valuation) : "~" + money(Math.round(x.valuation / 100000) * 100000);
+      var sectors = {};
+      x.buildings.forEach(function (b) { if (E.BUILD[b.type].cls !== "support") sectors[E.BUILD[b.type].name] = 1; });
+      return "<tr><td>" + esc(x.name) + '</td><td class="dim">' + E.ARCH[x.arch].name + "</td>" +
+        '<td class="num">' + x.buildings.length + '</td><td class="num">' + v + "</td>" +
+        '<td class="dim">' + Object.keys(sectors).slice(0, 3).join(", ") + "</td></tr>";
+    }).join("");
+
+  var shares = Object.keys(share).sort(function (a, b) { return share[b] - share[a]; }).slice(0, 6).map(function (k) {
+    return '<div class="kv"><span>' + E.CMAP[k].name + "</span><b>" + (share[k] * 100).toFixed(1) + "%</b></div>" +
+      '<div class="bar"><i style="width:' + Math.min(100, share[k] * 100) + '%"></i></div>';
+  }).join("") || '<div class="faint">You have sold nothing yet.</div>';
+
+  var evs = G.events.map(function (ev) {
+    return '<div class="kv"><span>' + evName(ev.kind) + "</span><b>" + ev.left + " days</b></div>";
+  }).join("") || '<div class="faint">Quiet conditions.</div>';
+
+  return '<div class="grid g21">' +
+    '<div class="grid">' +
+      cardRaw("Prices by region", "<table><thead>" + head + "</thead><tbody>" + rows + "</tbody></table>",
+        full ? "verified figures" : "trade gossip") +
+      cardRaw("Rivals", '<table><thead><tr><th>Firm</th><th>Type</th><th class="num">Sites</th>' +
+        '<th class="num">Valuation</th><th>Interests</th></tr></thead><tbody>' + rivals + "</tbody></table>") +
+    "</div>" +
+    '<div class="grid">' +
+      card("Your share of sales", shares) +
+      card("Conditions", evs +
+        '<div class="kv" style="margin-top:6px"><span>Wider economy</span><b>' +
+        Math.round(G.econ * (G.growth || 1) * 100) + "</b></div>") +
+      card("Reading the board", '<div class="dim" style="font-size:11px;line-height:1.6">' +
+        "Prices above the reference mean the world wants more than it makes. Prices below mean a glut, " +
+        "and the marginal producer is about to stop. Watch what falls out of production: that is where " +
+        "the next shortage comes from." + (full ? "" : " A market terminal replaces these estimates with real figures.") +
+        "</div>") +
+    "</div></div>";
+}
+function evName(k) {
+  return ({ mine_collapse: "Shaft collapse", discovery: "New reserves", energy_shortage: "Power rationing",
+    plant_fire: "Plant fire", route_closed: "Road closed", demand_surge: "Demand surge",
+    breakthrough: "New process", public_works: "State building programme", conflict: "Frontier conflict",
+    recession: "Recession", strike: "Labour dispute", glut: "Import glut" })[k] || k;
+}
+
+/* ---------- game over ---------- */
+function overScreen() {
+  var c = co();
+  return '<div class="overlay"><div class="sheet" style="max-width:520px">' +
+    "<h1>" + (G.over.win ? "THE HOUSE OF " + esc(c.name.toUpperCase()) : "WOUND UP") + "</h1>" +
+    '<p class="lede">' + esc(G.over.reason) + "</p>" +
+    '<div class="kv"><span>Days traded</span><b>' + G.day + "</b></div>" +
+    '<div class="kv"><span>Final valuation</span><b>' + m0(c.valuation) + "</b></div>" +
+    '<div class="kv"><span>Cumulative profit</span><b>' + m0(c.cum.profit) + "</b></div>" +
+    '<div class="kv"><span>Sites owned</span><b>' + c.buildings.length + "</b></div>" +
+    '<div style="margin-top:18px"><button class="primary" data-act="restart">Start again</button></div>' +
+    "</div></div>";
+}
+
+/* ---------- charts ---------- */
+function ctxFor(id) {
+  var cv = document.getElementById(id);
+  if (!cv) return null;
+  var w = cv.clientWidth || 300, h = cv.height;
+  var dpr = window.devicePixelRatio || 1;
+  cv.width = w * dpr; cv.style.height = h + "px";
+  cv.height = h * dpr;
+  var g = cv.getContext("2d");
+  g.scale(dpr, dpr);
+  return { g: g, w: w, h: h };
+}
+function lineChart(id, pts, color, fmt) {
+  var c = ctxFor(id);
+  if (!c || pts.length < 2) return;
+  var g = c.g, w = c.w, h = c.h, pad = 26;
+  var lo = Infinity, hi = -Infinity;
+  pts.forEach(function (p) { if (p < lo) lo = p; if (p > hi) hi = p; });
+  if (hi - lo < 1e-6) { hi = lo + 1; lo -= 1; }
+  var span = hi - lo;
+  lo -= span * 0.12; hi += span * 0.12;
+  g.clearRect(0, 0, w, h);
+  g.strokeStyle = "#221D18"; g.lineWidth = 1;
+  for (var i = 0; i <= 3; i++) {
+    var y = 6 + (h - 18) * i / 3;
+    g.beginPath(); g.moveTo(pad, y); g.lineTo(w - 4, y); g.stroke();
+    g.fillStyle = "#6A6055"; g.font = "9px ui-monospace, monospace";
+    g.fillText(fmt(hi - (hi - lo) * i / 3), 2, y + 3);
+  }
+  g.beginPath();
+  pts.forEach(function (p, i) {
+    var x = pad + (w - pad - 4) * i / (pts.length - 1);
+    var y = 6 + (h - 18) * (1 - (p - lo) / (hi - lo));
+    if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+  });
+  g.strokeStyle = color; g.lineWidth = 1.4; g.stroke();
+  g.lineTo(w - 4, h - 12); g.lineTo(pad, h - 12); g.closePath();
+  var grad = g.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, color.replace(")", ",.18)").replace("rgb", "rgba"));
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = grad; g.fill();
+}
+function drawCharts() {
+  if (UI.screen !== "game" || !G) return;
+  var c = co();
+  if (UI.tab === "dash") {
+    lineChart("cv-net", c.netHist.slice(-90).map(function (x) { return x.v; }), "rgb(224,163,46)", function (v) { return money(v); });
+  } else if (UI.tab === "market") {
+    var h = E.book(G, UI.region, UI.cid).hist.slice(-120).map(function (x) { return x.p; });
+    lineChart("cv-price", h, "rgb(180,83,42)", function (v) { return px(v); });
+  } else if (UI.tab === "ledger") {
+    lineChart("cv-cash", c.hist.slice(-90).map(function (x) { return x.cash; }), "rgb(143,168,95)", function (v) { return money(v); });
+  } else if (UI.tab === "log") {
+    drawMap();
+  }
+}
+function drawMap() {
+  var c = ctxFor("cv-map");
+  if (!c) return;
+  var g = c.g, w = c.w, h = c.h;
+  g.clearRect(0, 0, w, h);
+  var sx = w / 700, sy = h / 470;
+  function P(r) { return { x: 30 + r.x * sx * 0.9, y: 20 + r.y * sy * 0.9 }; }
+  g.font = "10px ui-monospace, monospace";
+  E.REGIONS.forEach(function (a, i) {
+    E.REGIONS.forEach(function (b, j) {
+      if (j <= i) return;
+      var pa = P(a), pb = P(b);
+      var key = a.id < b.id ? a.id + "|" + b.id : b.id + "|" + a.id;
+      var blocked = (G.freightMod[key] || 1) > 1.5;
+      g.strokeStyle = blocked ? "#C7573A" : "#2E2823";
+      g.lineWidth = blocked ? 1.6 : 1;
+      g.beginPath(); g.moveTo(pa.x, pa.y); g.lineTo(pb.x, pb.y); g.stroke();
+      g.fillStyle = "#4A4038";
+      g.fillText(E.dist(a.id, b.id) + "km", (pa.x + pb.x) / 2 - 12, (pa.y + pb.y) / 2 - 3);
+    });
+  });
+  G.shipments.forEach(function (s) {
+    var a = P(E.RMAP[s.from]), b = P(E.RMAP[s.to]);
+    var total = Math.max(1, E.transitDays(s.from, s.to));
+    var t = 1 - Math.max(0, s.arrive - G.day) / total;
+    var x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+    g.fillStyle = s.co === co().id ? "#E0A32E" : "#4A4038";
+    g.fillRect(x - 2, y - 2, 4, 4);
+  });
+  E.REGIONS.forEach(function (r) {
+    var p = P(r);
+    var mine = co().buildings.filter(function (b) { return b.rid === r.id; }).length;
+    g.beginPath(); g.arc(p.x, p.y, 7, 0, Math.PI * 2);
+    g.fillStyle = mine ? "#B4532A" : "#221D18";
+    g.strokeStyle = mine ? "#E0A32E" : "#4A4038";
+    g.fill(); g.stroke();
+    g.fillStyle = "#E8E1D4"; g.font = "11px ui-monospace, monospace";
+    g.fillText(r.name, p.x + 12, p.y + 3);
+    g.fillStyle = "#6A6055"; g.font = "9px ui-monospace, monospace";
+    var dep = Object.keys(G.regionState[r.id].deposits).map(function (k) { return E.CMAP[k].name; }).join(", ");
+    g.fillText(mine ? mine + " of your sites" : (dep || "industrial centre"), p.x + 12, p.y + 15);
+  });
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+else start();
+})();
+
+</script>
+</body>
+</html>
